@@ -121,6 +121,13 @@ def ExpFit(x, a, b, c):
 	return np.exp(a*(x-b)) + c
 
 
+def AtmosphericTau(x):
+	"""
+	https://www.aanda.org/articles/aa/full_html/2012/07/aa19040-12/aa19040-12.html
+	"""
+	return 0.00864*(x**(-(3.916 + (0.074*x) + (0.05/x))))
+
+
 def FitCenter(image, x_min, x_max, debug = False):
 	x = np.linspace(x_min, x_max, 100, dtype = 'int')
 	y = []
@@ -634,13 +641,15 @@ def Transmission(wavelength1, spectrum1, wavelength2, spectrum2, airmass1, airma
 	trans = np.exp(-tau)
 
 	plt.figure(dpi = 150, layout = 'tight')
-	plt.plot(points, tau, 'k')
-	plt.plot(points, tau_prime, 'r')
+	plt.plot(points, tau, 'r')
+	plt.plot(points, tau_prime, '.k')
 	lin = np.linspace(points[0], points[-1], 1000)
-	plt.plot(lin, ExpFit(lin, *pars))
+	plt.plot(lin, ExpFit(lin, *pars), 'b')
+	plt.plot(points, AtmosphericTau(points/1000), '-b')
 
 	plt.figure(dpi = 150, layout = 'tight')
-	plt.plot(points, trans)
+	plt.plot(points, trans, 'r')
+	plt.plot(points, np.exp(-AtmosphericTau(points/1000)), '-b')
 	plt.show()
 
 
