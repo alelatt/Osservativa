@@ -595,8 +595,6 @@ def Interactivity(image_names, lamp, flat, dark, FitFn, debug = False):
 	If no calibration file is used one can be created at the end of the process
 	"""
 
-	#gain = np.mean(flat)/flat #, master_flat = flat
-
 	hdul_dark = fits.open(dark_names[0])
 	texp_dark = float(hdul_dark[0].header['EXPOSURE'])
 
@@ -935,7 +933,7 @@ def CheckBack(wavelength, spectrum, vega, airmass, texp):
 	plt.ylabel(r"Flux [erg $s^{-1}$ $cm^{-2}$ A $10^{16}$]")
 	plt.show()
 	return
-	
+
 
 
 if __name__ == '__main__':
@@ -966,7 +964,7 @@ if __name__ == '__main__':
 	texp_lamp = float(hdulamp[0].header['EXPOSURE'])
 	lamp = np.asarray(ccd_process(CCDData(fits.getdata("sirius_lamp.fit", ext=0), unit = "adu"), dark_frame = master_dark, dark_exposure = texp_dark*u.second, data_exposure = texp_lamp*u.second, gain_corrected = False))
 
-	spectrum1, wavelength1, spectrum2, wavelength2, ra_ICRS, dec_ICRS = Interactivity(image_names, lamp, master_flat, master_dark, PolyFit, debug = True)
+	spectrum1, wavelength1, spectrum2, wavelength2, ra_ICRS, dec_ICRS = Interactivity(image_names, lamp, master_flat, master_dark, PolyFit, debug = False)
 	'''
 	SpectrumPlot(wavelength1, spectrum1, xunit = "nm", title = "Extracted Spectrum from "sirius.fit")
 	SpectrumPlot(wavelength2, spectrum2, xunit = "nm", title = "Extracted Spectrum from "sirius2.fit")
@@ -995,6 +993,6 @@ if __name__ == '__main__':
 
 	mask = wav >= 450
 
-	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2)
+	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = False)
 
 	CheckBack(wav, spav1, spav3, air1, texp1)
