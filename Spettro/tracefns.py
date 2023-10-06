@@ -209,6 +209,4 @@ def ComputeAirmass(dfrac, dd, mm, yy, ra_ICRS, dec_ICRS, phi, L, height):
 
 	ra, dec, H, h, A = DoCalculation(dfrac, ra_all, dec_all, phi, L, T0, DT, h0)
 
-	print(h)
-
 	return 1./np.cos((90 - h)*np.pi/180)

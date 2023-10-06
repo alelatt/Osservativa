@@ -77,11 +77,11 @@ def MakeMasterFlat(file_names, master_dark):
 		data	Averaged image
 	"""
 
-	flat_temp = fits.getdata(file_names[0], ext=0) - master_dark
+	flat_temp = (fits.getdata(file_names[0], ext=0)/float(fits.open(file_names[0])[0].header['EXPOSURE'])) - master_dark
 	data = (flat_temp/np.mean(flat_temp))/len(file_names)
 
 	for i in range(1, len(file_names)):
-		flat_temp = fits.getdata(file_names[i], ext=0) - master_dark
+		flat_temp = (fits.getdata(file_names[i], ext=0)/float(fits.open(file_names[i])[0].header['EXPOSURE'])) - master_dark
 		data += (flat_temp/np.mean(flat_temp))/len(file_names)
 
 	return data
@@ -116,6 +116,13 @@ def PolyFit(x, a, b, c):
 
 def ExpFit(x, a, b, c):
 	return np.exp(a*(x-b)) + c
+
+
+def AtmosphericTau(x):
+	"""
+	https://www.aanda.org/articles/aa/full_html/2012/07/aa19040-12/aa19040-12.html
+	"""
+	return 0.00864*(x**(-(3.916 + (0.074*x) + (0.05/x))))
 
 
 def FitCenter(image, x_min, x_max, debug = False):
@@ -518,10 +525,10 @@ def Interactivity(image_names, lamp, flat, dark, FitFn, debug = False):
 
 		hdul1 = fits.open(image_names[0])
 		rotated_ang = float(hdul1[0].header['ROT_ANG'])
-		img1_raw = (ndimage.rotate(fits.getdata(image_names[0], ext=0), -rotated_ang, reshape = False) - dark)*gain
+		img1_raw = (ndimage.rotate(fits.getdata(image_names[0], ext=0)/float(hdul1[0].header['EXPOSURE']), -rotated_ang, reshape = False) - dark)*gain
 
 		hdul2 = fits.open(image_names[1])
-		img2_raw = ((2*fits.getdata(image_names[1], ext=0)) - dark)*gain
+		img2_raw = ((fits.getdata(image_names[1], ext=0)/float(hdul2[0].header['EXPOSURE'])) - dark)*gain
 
 		rot_img1 = ndimage.rotate(img1_raw, rot_ang1, reshape = False)
 		rot_img2 = ndimage.rotate(img2_raw, rot_ang2, reshape = False)
@@ -569,7 +576,7 @@ def Interactivity(image_names, lamp, flat, dark, FitFn, debug = False):
 	return (spectrum_meas1, lam1, spectrum_meas2, lam2)
 
 
-def InterpolateSpectrum(spectrum_meas, lam, bin_size):
+def BinSpectrum(spectrum_meas, lam, bin_size):
 	start = 0
 	end = 0
 
@@ -593,6 +600,22 @@ def InterpolateSpectrum(spectrum_meas, lam, bin_size):
 	return (x, y)
 
 
+def InterpolateSpectra(wavelength1, spectrum_meas1, wavelength2, spectrum_meas2, wavelength3, spectrum_meas3, bin_size):
+	wav1, spav1 = BinSpectrum(spectrum_meas1, wavelength1, bin_size)
+	wav2, spav2 = BinSpectrum(spectrum_meas2, wavelength2, bin_size)
+	wav3, spav3 = BinSpectrum(spectrum_meas3, wavelength3, bin_size)
+
+	low = np.max([np.min(wavelength1), np.min(wavelength2)])
+	high = np.min([np.max(wavelength1), np.max(wavelength2)])
+
+	out_wave = wav1[np.where((wav1 >= low) & (wav1 <= high))]
+	out_spectrum1 = spav1[np.where((wav1 >= low) & (wav1 <= high))]
+	out_spectrum2 = spav2[np.where((wav2 >= low) & (wav2 <= high))]
+	out_spectrum3 = spav3[np.where((wav3 >= low) & (wav3 <= high))]
+
+	return (out_wave, out_spectrum1, out_spectrum2, out_spectrum3)
+
+
 def FindAirmass(image_name):
 	hdul = fits.open(image_name)
 	date = hdul[0].header['DATE-OBS']
@@ -609,42 +632,57 @@ def FindAirmass(image_name):
 	return ComputeAirmass(dayfrac, dd, mm, yy, ra_ICRS, dec_ICRS, phi, L, height)
 
 
-def Transmission(wavelength1, spectrum1, wavelength2, spectrum2, airmass1, airmass2, bin_size, debug = False):
-	low = np.max([np.min(wavelength1), np.min(wavelength2)])
-	high = np.min([np.max(wavelength1), np.max(wavelength2)])
-
-	ratio = spectrum1[np.where((wavelength1 >= low) & (wavelength1 <= high))]/spectrum2[np.where((wavelength2 >= low) & (wavelength2 <= high))]
+def Response(wavelength, spectrum1, spectrum2, spectrum3, airmass1, airmass2, texp1, texp2, debug = False):
+	ratio = spectrum1/spectrum2
 
 	tau_prime = np.log(ratio)/(airmass2 - airmass1)
 
-	points = np.arange(low, high + bin_size, bin_size, dtype = 'int')
+	mask = wavelength >= 450
 
-	pars, covm = curve_fit(ExpFit, points[np.where((points >= 450) & (points <= 650))], tau_prime[np.where((points >= 450) & (points <= 650))], p0 = (-0.01, 450, -0.2), bounds = ((-np.inf, 0, -np.inf),(0, np.inf, np.inf)))
+	pars, covm = curve_fit(ExpFit, wavelength[mask], tau_prime[mask], p0 = (-0.01, 450, -0.2), bounds = ((-np.inf, 0, -np.inf),(0, np.inf, np.inf)))
 	errs = np.sqrt(covm.diagonal())
 
 	print(pars, errs)
 
-	tau = ExpFit(points, pars[0], pars[1], 0)
+	tau = ExpFit(wavelength, pars[0], pars[1], 0)
 
-	trans = np.exp(-tau)
+	trans_0 = np.exp(-tau)
 
-	plt.figure(dpi = 150, layout = 'tight')
-	plt.plot(points, ratio)
+	print("A2/A1 = %.2f" %((texp1/texp2)*np.exp(pars[2]*(airmass1 - airmass2))))
+	A1 = 1
+	A2 = (texp1/texp2)*np.exp(pars[2]*(airmass1 - airmass2))
 
-	plt.figure(dpi = 150, layout = 'tight')
-	plt.plot(points, tau, 'k')
-	plt.plot(points, tau_prime, 'r')
-	lin = np.linspace(points[0], points[-1], 1000)
-	plt.plot(lin, ExpFit(lin, *pars))
+	instr_0_1 = spectrum1/(spectrum3*(trans_0**airmass1)*A1*texp1)
+	instr_0_2 = spectrum2/(spectrum3*(trans_0**airmass2)*A2*texp2)
 
 	plt.figure(dpi = 150, layout = 'tight')
-	plt.plot(points, trans)
+	plt.plot(wavelength, ratio, '.k', label = "$I_1/I_2$")
+	plt.legend(loc = 'best')
+
+	plt.figure(dpi = 150, layout = 'tight')
+	plt.plot(wavelength, tau, 'r', label = r"Corrected $\tau$")
+	plt.plot(wavelength, tau_prime, '.k', label = r"$\tau'$")
+	lin = np.linspace(wavelength[0], wavelength[-1], 1000)
+	plt.plot(lin, ExpFit(lin, *pars), 'b', label = r"Fit over $\tau'$")
+	plt.plot(lin, AtmosphericTau(lin/1000), '--g', label = r"Reference $\tau$")
+	plt.legend(loc = 'best')
+
+	plt.figure(dpi = 150, layout = 'tight')
+	plt.plot(wavelength, trans_0, 'r', label = "Computed Transmittance")
+	plt.plot(lin, np.exp(-AtmosphericTau(lin/1000)), '--g', label = "Reference Transmittance")
+	plt.legend(loc = 'best')
+
+	plt.figure(dpi = 150, layout = 'tight')
+	plt.plot(wavelength, instr_0_1, 'r')
+	plt.plot(wavelength, instr_0_2, 'k')
 	plt.show()
+
+	return trans_0, instr_0_1
 
 
 
 if __name__ == '__main__':
-	master_dark = (fits.getdata(dark_names[0], ext=0) + fits.getdata(dark_names[1], ext=0))/2
+	master_dark = ((fits.getdata(dark_names[0], ext=0) + fits.getdata(dark_names[1], ext=0))/2)/float(fits.open(dark_names[0])[0].header['EXPOSURE'])
 	master_flat = MakeMasterFlat(flat_names, master_dark)
 	hdulamp = fits.open("sirius_lamp.fit")
 	lamp = ((hdulamp[0].data - master_dark)*np.mean(master_flat))/master_flat
@@ -658,11 +696,12 @@ if __name__ == '__main__':
 	
 	bin_size = 5
 
-	wav1, spav1 = InterpolateSpectrum(spectrum1, wavelength1, bin_size)
-	wav2, spav2 = InterpolateSpectrum(spectrum2, wavelength2, bin_size)
+	vega_wave, vega_flux = np.genfromtxt("vega_std.txt", usecols = (0,1), unpack = True, dtype = (float, float))
+	wav, spav1, spav2, spav3 = InterpolateSpectra(wavelength1, spectrum1, wavelength2, spectrum2, vega_wave/10, vega_flux, bin_size)
 
-	SpectrumPlot(wav1, spav1, xunit = "nm")
-	SpectrumPlot(wav2, spav2, xunit = "nm")
+	SpectrumPlot(wav, spav1, xunit = "nm")
+	SpectrumPlot(wav, spav2, xunit = "nm")
+	SpectrumPlot(wav, spav3, xunit = "nm")
 	plt.show()
 	plt.close('all')
 
@@ -670,4 +709,7 @@ if __name__ == '__main__':
 	air2 = FindAirmass(image_names[1])
 	print(air1, air2)
 
-	Transmission(wav1, spav1, wav2, spav2, air1, air2, bin_size)
+	texp1 = 1
+	texp2 = 1
+
+	transmittance_0, instrumental_0 = Response(wav, spav1, spav2, spav3, air1, air2, texp1, texp2)

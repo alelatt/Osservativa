@@ -1,3 +1,6 @@
+#Counter-Rotates "sirius.fit", which was auto-rotated
+
+
 from astropy.io import fits
 from matplotlib import pyplot as plt
 import numpy as np
@@ -19,41 +22,44 @@ calibrator = np.flip(io.imread("Spectrum_calibration.png", as_gray = True), axis
 def Line(x, a, b):
 	return a + b*x
 
-img = abs(np.gradient(fits.getdata(image_names[0], ext=0))[0])[:60,1500:]
 
-img[np.where(img <= 0.7*np.max(img))] = 0
-img[np.where(img > 0.7*np.max(img))] = 1
 
-plt.figure(dpi = 150, layout = 'tight')
-plt.imshow(img, origin = 'lower')
+if __name__ == '__main__':
+	img = abs(np.gradient(fits.getdata(image_names[0], ext=0))[0])[:60,1500:]
 
-x = np.where(img == 1)[1]
-y = np.where(img == 1)[0]
+	img[np.where(img <= 0.7*np.max(img))] = 0
+	img[np.where(img > 0.7*np.max(img))] = 1
 
-pars, covm = curve_fit(Line, x, y)
-errs = np.sqrt(covm.diagonal())
+	plt.figure(dpi = 150, layout = 'tight')
+	plt.imshow(img, origin = 'lower')
 
-vec = np.array([1., pars[1]])/np.sqrt(pars[1]**2 + 1)
+	x = np.where(img == 1)[1]
+	y = np.where(img == 1)[0]
 
-rot_ang = None
+	pars, covm = curve_fit(Line, x, y)
+	errs = np.sqrt(covm.diagonal())
 
-if vec[1] < 0:
-	rot_ang = -np.arccos(np.dot(vec, np.array([1,0])))*180/np.pi
-else:
-	rot_ang = np.arccos(np.dot(vec, np.array([1,0])))*180/np.pi
+	vec = np.array([1., pars[1]])/np.sqrt(pars[1]**2 + 1)
 
-plt.figure()
-plt.plot(x,y,'.')
-lin = np.arange(0, len(img[0,:]), 1)
-plt.plot(lin, Line(lin, *pars))
-#plt.show()
+	rot_ang = None
 
-print(-rot_ang)
+	if vec[1] < 0:
+		rot_ang = -np.arccos(np.dot(vec, np.array([1,0])))*180/np.pi
+	else:
+		rot_ang = np.arccos(np.dot(vec, np.array([1,0])))*180/np.pi
 
-plt.figure()
-plt.imshow(fits.getdata(image_names[0], ext=0), origin = 'lower', norm = 'log')
-plt.figure()
-plt.imshow(ndimage.rotate(fits.getdata(image_names[0], ext=0), rot_ang, reshape = True), origin = 'lower', norm = 'log')
-#plt.show()
+	plt.figure()
+	plt.plot(x,y,'.')
+	lin = np.arange(0, len(img[0,:]), 1)
+	plt.plot(lin, Line(lin, *pars))
+	#plt.show()
 
-fits.setval(image_names[0], 'ROT_ANG', value = str(-rot_ang))
+	print(-rot_ang)
+
+	plt.figure()
+	plt.imshow(fits.getdata(image_names[0], ext=0), origin = 'lower', norm = 'log')
+	plt.figure()
+	plt.imshow(ndimage.rotate(fits.getdata(image_names[0], ext=0), rot_ang, reshape = True), origin = 'lower', norm = 'log')
+	#plt.show()
+
+	fits.setval(image_names[0], 'ROT_ANG', value = str(-rot_ang))
