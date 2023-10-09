@@ -10,24 +10,35 @@ from astropy.coordinates import solar_system_ephemeris, get_sun
 
 
 def DoCalculation(dfrac, ra_set, dec_set, phi, L, T0, DT, h0):
-	'''
+	"""
 	Calculation needed both for the iterative correction to the day fractions and for the plots
 	
 	Inputs:
-		dfrac	Day fraction for which the computation is needed
-		ra_set	Set of ra (see CoordArraySetup) - Values in deg
-		dec_set	Set of dec (see CoordArraySetup) - Values in deg
-		phi		Observer latitude - Value in deg
-		L		Observer longitude - Value in deg
-		T0		GAST (see GAST_deg) - Value in deg
+		dfrac : float
+			Day fraction for which the computation is needed
+		ra_set : ndarray
+			Set of ra (see "CoordArraySetup()") - Values in deg
+		dec_set : ndarray
+			Set of dec (see "CoordArraySetup()") - Values in deg
+		phi : float
+			Observer latitude - Value in deg
+		L : float
+			Observer longitude - Value in deg
+		T0 : float
+			GAST (see "GAST_deg()") - Value in deg
 
 	Outputs:
-		ra	Interpolated value of ra at given day fraction - Value in deg
-		dec Interpolated value of dec at given day fraction - Value in deg
-		H	Computed value of the local hour angle at given day fraction - Value in deg
-		h	Computed alt of object at given day fraction - Value in deg
-		A	Computed az of object at given day fraction - Value in deg
-	'''
+		ra : float
+			Interpolated value of ra at given day fraction - Value in deg
+		dec : float
+			Interpolated value of dec at given day fraction - Value in deg
+		H : float
+			Computed value of the local hour angle at given day fraction - Value in deg
+		h : float
+			Computed alt of object at given day fraction - Value in deg
+		A : float
+			Computed az of object at given day fraction - Value in deg
+	"""
 
 	t0 = (T0 + 360.985647*dfrac)%360
 	n = dfrac + DT/86400
@@ -52,21 +63,24 @@ def DoCalculation(dfrac, ra_set, dec_set, phi, L, T0, DT, h0):
 
 
 def Seth0(instr = 'star', height_slm = 0):
-	'''
+	"""
 	Sets h0 (in deg) for further use
 
 	Inputs:
-		instr		Which h0 is needed
-		height_slm	Height above MSL - Value in m
+		instr : str
+			Which h0 is needed
+		height_slm : float
+			Height above MSL - Value in m
 
 	Outputs:
-		h0	Value for the requested event/object corrected for height above MSL
+		h0 : float
+			Value for the requested event/object corrected for height above MSL
 
 	For the sun h0 = -50/60
 	For civil twilight h0 = -6
 	For astronomical twilight h0 = -18
 	For other objects h0 = -34/60
-	'''
+	"""
 
 	if instr == 'sun':
 		return -50/60 - 0.0353*np.sqrt(height_slm)
@@ -79,17 +93,21 @@ def Seth0(instr = 'star', height_slm = 0):
 
 
 def ToJDN(dd,mm,yy):
-	'''
+	"""
 	Calculate JDN from gregorian date
 
 	Inputs:
-		dd	Day
-		mm	Month
-		yy	Year
+		dd : int
+			Day
+		mm : int
+			Month
+		yy : int
+			Year
 
 	Outputs:
-		JDN	Julian Day Number
-	'''
+		JDN : float
+			Julian Day Number
+	"""
 
 	if mm == 1 or mm == 2:
 		mm = mm+12
@@ -104,15 +122,17 @@ def ToJDN(dd,mm,yy):
 
 
 def GAST_deg(JD):
-	'''
+	"""
 	Calculate Greenwich Apparent Sideral Time at 0h for the needed day from USNO
 
 	Inputs:
-		JD		Julian Day Number
+		JD : float
+			Julian Day Number
 
 	Outputs:
-		GAST	Greenwich Apparent Sideral Time at 0h for the needed day from USNO - Value in deg
-	'''
+		GAST : float
+			Greenwich Apparent Sideral Time at 0h for the needed day from USNO - Value in deg
+	"""
 
 	DUT = JD - 2451545.0
 	GMST = (18.697375 + 24.065709824279*DUT)%24
@@ -129,42 +149,52 @@ def GAST_deg(JD):
 
 
 def FindDT(yy):
-	'''
+	"""
 	Calculate deltaT = TT - UT using one of the many empyrical formulae
 
 	Inputs:
-		yy		Year
+		yy : int
+			Year
 
 	Outputs:
-		deltaT	TT - UT in seconds
-	'''
+		deltaT : float
+			TT - UT in seconds
+	"""
 
 	t = (yy - 1825)/100
 	return -150.315 + 31.4115*(t**2) + 284.8436*np.cos(2*np.pi*(t + 0.75)/14)
 
 
 def CoordArraysSetup(dd, mm, yy, ra_ICRS, dec_ICRS, obj = 'star'):
-	'''
+	"""
 	Finds values of "apparent" ra/dec (true equator, true equinox) for the day of the observation and the ones before and after
 
 	Inputs:
-		dd			Day
-		mm			Month
-		yy			Year
-		ra_ICRS		ra of the object in ICRS frame - Value in deg
-		dec_ICRS	dec of the object in ICRS frame - Value in deg
-		obj			Instruction for needed body/event: 'sun', 'civil', 'astro' for the Sun, 'star' or other for an object
+		dd : int
+			Day
+		mm : int
+			Month
+		yy : int
+			Year
+		ra_ICRS : float
+			ra of the object in ICRS frame - Value in deg
+		dec_ICRS : float
+			dec of the object in ICRS frame - Value in deg
+		obj : str
+			Instruction for needed body/event: 'sun', 'civil', 'astro' for the Sun, 'star' or other for an object
 
 	Outputs:
-		ra_set		Set of "apparent" ra - Values in deg
-		dec_set		Set of "apparent" dec - Values in deg
+		ra_set : ndarray
+			Set of "apparent" ra - Values in deg
+		dec_set : ndarray
+			Set of "apparent" dec - Values in deg
 
 	First "Time" objects are defined for the needed dates.
 	With the given times "astropy" is used to get a coordinate object for the target (sun/object) which is then transformed to "TETE" and put in the output arrays
 
 	Each output array contains three values of ra/dec:
 		The first value of the array is for the day before, the second for the day of the observation and the third for the day after
-	'''
+	"""
 
 	t1 = Time(datetime.datetime(yy,mm,dd-1,0,0,0), format='datetime', scale='utc')
 	t2 = Time(datetime.datetime(yy,mm,dd,0,0,0), format='datetime', scale='utc')
@@ -198,6 +228,34 @@ def CoordArraysSetup(dd, mm, yy, ra_ICRS, dec_ICRS, obj = 'star'):
 
 
 def ComputeAirmass(dfrac, dd, mm, yy, ra_ICRS, dec_ICRS, phi, L, height):
+	"""
+	Uses previous functions to compute airmass at given time
+
+	Inputs:
+		dfrac : float
+			Day fraction for which airmass is needed
+		dd : int
+			Day
+		mm : int
+			Month
+		yy : int
+			Year
+		ra_ICRS : float
+			ra coordinate in ICRS frame - Value in deg
+		dec_ICRS : float
+			dec coordinate in ICRS frame - Value in deg
+		phi : float
+			Observer latitude - Value in deg
+		L : float
+			Observer longitude - Value in deg
+		height : float
+			Observer height above MSL - Value in m
+
+	Outputs:
+		airmass : float
+			Computed airmass value
+	"""
+
 	h0 = Seth0('star', height)
 
 	JD = ToJDN(dd,mm,yy)

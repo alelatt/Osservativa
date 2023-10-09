@@ -430,14 +430,14 @@ def GetSpectrum(image, lamp, calibrator_img, FitFn, debug = False):
 
 	Outputs:
 		lam				Array of converted px to wavelength (nm)
-		spectrum_meas	Measured spectrum (see "ExtractSpectrum")
-		x_min			Output to be saved in calibration file (see "ExtractSpectrum")
-		x_max			Output to be saved in calibration file (see "ExtractSpectrum")
-		y_c				Output to be saved in calibration file (see "ExtractSpectrum")
-		width			Output to be saved in calibration file (see "ExtractSpectrum")
+		spectrum_meas	Measured spectrum (see "ExtractSpectrum()")
+		x_min			Output to be saved in calibration file (see "ExtractSpectrum()")
+		x_max			Output to be saved in calibration file (see "ExtractSpectrum()")
+		y_c				Output to be saved in calibration file (see "ExtractSpectrum()")
+		width			Output to be saved in calibration file (see "ExtractSpectrum()")
 
-	The spectrum and measured lamp are first extracted (see "ExtractSpectrum")
-	Then the calibration is done to convert from px to nm (see "CalibrateSpectrum" or "UseCalibrator")
+	The spectrum and measured lamp are first extracted (see "ExtractSpectrum()")
+	Then the calibration is done to convert from px to nm (see "CalibrateSpectrum" or "UseCalibrator()")
 	"""
 
 	rot_ang = FineRotate(image, debug)
@@ -482,10 +482,10 @@ def Interactivity(flat, dark, FitFn, debug = False):
 		Debug		Debug option
 
 	Outputs:
-		spectrum_meas1	Measured spectrum intensities for first spectrum (see "ExtractSpectrum")
-		lam1			Measured spectrum wavelength array for first spectrum (see "GetSpectrum")
-		spectrum_meas2	Measured spectrum intensities for second spectrum (see "ExtractSpectrum")
-		lam2			Measured spectrum wavelength array for second spectrum (see "GetSpectrum")
+		spectrum_meas1	Measured spectrum intensities for first spectrum (see "ExtractSpectrum()")
+		lam1			Measured spectrum wavelength array for first spectrum (see "GetSpectrum()")
+		spectrum_meas2	Measured spectrum intensities for second spectrum (see "ExtractSpectrum()")
+		lam2			Measured spectrum wavelength array for second spectrum (see "GetSpectrum()")
 
 	If no calibration file is used one can be created at the end of the process
 	"""

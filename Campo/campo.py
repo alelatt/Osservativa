@@ -8,7 +8,7 @@ from skimage.util import random_noise
 from skimage.restoration import richardson_lucy
 import os
 
-'''
+"""
 Field reconstruction analysis
 
 
@@ -22,7 +22,7 @@ Cut at % of brightest: >>0.0015
 Fictitious pixels reconstructed: 26 (0.260 %)
 Stars lost in reconstruction: 12 (17.143 %)
 Try other threshold? (y/n): >>n
-'''
+"""
 
 #################	GLOBAL CONSTANTS	#################
 #Grid setup constants
@@ -44,17 +44,15 @@ backgr = 10
 
 #################	FUNCTIONS	#################
 def GenerateSequence():
-	'''
+	"""
 	Generates positions on the board and luminosity of stars and saves output
 
 	Outputs:
-		data	2D matrix such that the first column is x, the second y, the third L for all stars
-			x		x coord. of star
-			y		y coord. of star
-			L		Luminosity of star - Value in solar luminosities
+		data : ndarray
+			2D matrix such that the first column is the x coord, the second the y coord, the third is the luminosity L in solar luminosities for all stars
 
 	Generated values of mass (M) given in solar masses
-	'''
+	"""
 
 	x = uniform(0, grid_len, N)
 	y = uniform(0, grid_len, N)
@@ -84,16 +82,17 @@ def GenerateSequence():
 
 
 def GeneratePixels():
-	'''
+	"""
 	Generates pixel board
 
 	Outputs:
-		board_base	Pixel board: each cell of the 2D board is the luminosity value given as the sum of the luminosities of all the stars within the pixel renormalized and rounded
+		board_base : ndarray
+			Pixel board: each cell of the 2D board is the luminosity value given as the sum of the luminosities of all the stars within the pixel renormalized and rounded
 
-	Placement of the stars is given by "GenerateSequence"
+	Placement of the stars is given by "GenerateSequence()"
 
 	The renormalization is such that the faintest star has a brightness of "Lmin" (see global constants)
-	'''
+	"""
 
 	board_base = np.zeros((grid_len, grid_len))
 
@@ -111,14 +110,14 @@ def GeneratePixels():
 
 
 def BoardIt():
-	'''
+	"""
 	Checks for the existence of "board.txt". If present imports the board, else generates a new board
 
 	Outputs:
 		board_out	Pixel board: each cell of the 2D board is the luminosity value given as the sum of the luminosities of all the stars within the pixel
 
 	Board generation is done by "GeneratePixel"
-	'''
+	"""
 
 	board_out = None
 	if os.path.isfile('./board.txt') == False:
@@ -131,7 +130,7 @@ def BoardIt():
 
 
 def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectral'):
-	'''
+	"""
 	Makes a colormap plot of the given board
 
 	Inputs:
@@ -139,7 +138,7 @@ def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectra
 		board			The board to plot
 		color_scale		Scale of the colormap, must be 'linear', 'log' or other specified keywords
 		color_scheme	Color scheme of the colormap
-	'''
+	"""
 
 	f = plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 	ax = f.add_subplot(1,1,1)
@@ -152,7 +151,7 @@ def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectra
 
 
 def GaussFn(x, sigma, height, offset):
-	'''
+	"""
 	Fit funcion for a gaussian with mean = 0 and an offset
 
 	Inputs:
@@ -160,13 +159,13 @@ def GaussFn(x, sigma, height, offset):
 		sigma	Sigma of the distribution
 		height	Multiplicative factor
 		offset	Offset
-	'''
+	"""
 
 	return ((np.exp(-x**2/(2*(sigma**2)))*height) + offset)
 
 
 def BoardToDistance(board_sect):
-	'''
+	"""
 	Finds the maximum value in a section of the board and takes the minimum value on the board at each distance from the maximum
 
 	Inputs:
@@ -176,7 +175,7 @@ def BoardToDistance(board_sect):
 		dist			Array with every distance from the maximum ordered from shortest distance to furthest
 		vals			Array with the minimum value on the board at each distance from maximum
 		center_coords	Array containing the most luminous point's coordinates on the board
-	'''
+	"""
 
 	x_c, y_c = np.where(board_sect == np.max(board_sect))
 	center_coords = np.array([x_c[0], y_c[0]])
@@ -202,7 +201,7 @@ def BoardToDistance(board_sect):
 	return(dist, vals, center_coords)
 
 def PSFFit(board_sect, sigma_min, debug = False):
-	'''
+	"""
 	Finds sigma for gaussian PSF from a portion of the board around a given luminosity peak
 	
 	Inputs:
@@ -217,7 +216,7 @@ def PSFFit(board_sect, sigma_min, debug = False):
 
 	The 2D board is transformed into a 1D array of the minimum values on the board at each distance from the most luminous point (see "BoardToDistance")
 		The fit is done on the set of minimum values using a 1D gaussian (see "GaussFn")
-	'''
+	"""
 
 	dist, vals, center_coords = BoardToDistance(board_sect)
 
@@ -238,7 +237,7 @@ def PSFFit(board_sect, sigma_min, debug = False):
 	return (pars,errs, PSFboard)
 
 def FindPSF(board_in, nstars = 2 , sigma_min = 1, crowded = False, debug = False):
-	'''
+	"""
 	Finds PSF from brightest stars
 
 	Inputs:
@@ -255,7 +254,7 @@ def FindPSF(board_in, nstars = 2 , sigma_min = 1, crowded = False, debug = False
 
 	The user will be shown the board and will have to choose a distance around the star over which the fit is applied
 		If said distance goes off the board on one or more sides the cut board will stop at the board limits
-	'''
+	"""
 
 	PixelPlot(board_in, title = "Observed Image")
 	plt.show(block = False)
@@ -337,7 +336,7 @@ def FindPSF(board_in, nstars = 2 , sigma_min = 1, crowded = False, debug = False
 
 
 def Difference(a,b):
-	'''
+	"""
 	Computes the "relative difference" between two arrays of the same dimensions
 
 	Inputs:
@@ -345,7 +344,7 @@ def Difference(a,b):
 
 	Outputs:
 		Relative difference computed as the sum over the absolute value of each element of the array (a-b) weighted by the sum of all elements of array a (assumed positive)
-	'''
+	"""
 
 	return np.sum(np.abs(a-b))/np.sum(a)
 
@@ -355,7 +354,7 @@ def ChiSq(a, b):
 
 
 def Lucy(board, PSF_board, sigma, offset, reps = 12000, thresh = 1e-7, use_thresh = False, use_chisq = True, debug = False):
-	'''
+	"""
 	Applies Lucy reconstruction
 
 	Inputs:
@@ -376,7 +375,7 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, thresh = 1e-7, use_thres
 
 	The reconstruction stops after a set amount of iterations or after a set threshold is reached
 		The threshold is computed as the relative difference between the reconstructed image at the current and previous step (see "Difference")
-	'''
+	"""
 
 	print("\nRunning Reconstruction")
 	g0 = np.copy(board - offset)
@@ -508,7 +507,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 
 def FictitiousStars(true_board, recon_board, out_needed = False):
-	'''
+	"""
 	Compares true and reconstructed fields to inform on goodness of reconstruction
 
 	Inputs:
@@ -525,7 +524,7 @@ def FictitiousStars(true_board, recon_board, out_needed = False):
 	The following two plots (true and reconstructed field) will have "1" on a pixel if the pixel is full, "0" if empty
 	The last plot is the pixel-by-pixel difference (true - reconstructed) such that the board has "1" if the pixel was full in the original field but not after the reconstruction,
 		"0" if the status of the pixel is the same in the two boards and "-1" if the pixel was empty in the original field but not after the reconstruction
-	'''
+	"""
 
 	while True:
 		true = np.copy(true_board)
@@ -593,7 +592,7 @@ plt.close('all')
 
 
 #################	NO EFFECTS	#################
-'''
+"""
 board_base_PSF, sigma_base, offset_base = FindPSF(board_base, nstars = 5 , sigma_min = 0, crowded = True, debug = False)
 board_base_rec1 = Reconstruction(board_base, sigma_base, offset_base, reps = 12000, debug = True)
 board_base_rec2 = Lucy(board_base, board_base_PSF, sigma_base, offset_base, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = False, debug = True)
@@ -603,10 +602,10 @@ PixelPlot(board_base_rec1, "Base Board Reconstruction (PSF Fit)")
 PixelPlot(board_base_rec2, "Base Board Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-'''
+"""
 
 #################	GAUSSIAN PSF	#################
-'''
+"""
 board_gauss = gaussian_filter(board_base, sigma = sigma, mode = 'constant', cval = 0)
 board_gauss_PSF, sigma_gauss, offset_gauss = FindPSF(board_gauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
 board_gauss_rec1 = Reconstruction(board_gauss, sigma_gauss, offset_gauss, reps = 12000, debug = True)
@@ -617,10 +616,10 @@ PixelPlot(board_gauss_rec1, "Gaussian PSF Reconstruction (PSF Fit)")
 PixelPlot(board_gauss_rec2, "Gaussian PSF Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-'''
+"""
 
 #################	POISSON NOISE	#################
-'''
+"""
 board_poiss = np.random.poisson(board_base)
 board_poiss_PSF, sigma_poiss, offset_poiss = FindPSF(board_poiss, nstars = 5, sigma_min = 0, crowded = True, debug = False)
 board_poiss_rec1 = Reconstruction(board_poiss, sigma_poiss, offset_poiss, reps = 12000, debug = True)
@@ -631,7 +630,7 @@ PixelPlot(board_poiss_rec1, "Poisson Noise Reconstruction (PSF Fit)")
 PixelPlot(board_poiss_rec2, "Poisson Noise Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-'''
+"""
 
 #################	POISSON NOISE + GAUSSIAN PSF	#################
 
@@ -649,7 +648,7 @@ plt.close('all')
 
 
 #################	BACKGROUND + GAUSSIAN PSF	#################
-'''
+"""
 board_backgauss = gaussian_filter(board_base + backgr, sigma = sigma, mode = 'constant', cval = backgr)
 board_backgauss_PSF, sigma_backgauss, offset_backgauss = FindPSF(board_backgauss, nstars = 3, sigma_min = 1, crowded = True, debug = False)
 board_backgauss_rec1 = Reconstruction(board_backgauss, sigma_backgauss, offset_backgauss, reps = 12000, debug = True)
@@ -660,4 +659,4 @@ PixelPlot(board_backgauss_rec1, "Uniform Background + Gaussian PSF Reconstructio
 PixelPlot(board_backgauss_rec2, "Uniform Background + Gaussian PSF Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-'''
+"""
