@@ -105,7 +105,7 @@ def GeneratePixels():
 
 	board_base = np.round(board_base * Lmin/np.min(board_base[np.where(board_base > 0)]))
 
-	np.savetxt("board.txt", board_base)
+	#np.savetxt("board.txt", board_base)
 
 	return board_base
 
@@ -477,7 +477,10 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gau
 	count_trys = np.zeros((grid_len, grid_len))
 	count_occur = np.zeros((grid_len, grid_len))
 
+	tot_time = 0
+
 	for i in range(0,niter):
+		t1 = time.time()
 		board = GeneratePixels()
 
 		img = None
@@ -519,14 +522,19 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gau
 		
 		outerr = np.zeros(np.shape(board))
 
-	return np.divide(count_occur, count_trys, out = outerr, where = count_trys != 0)
+		out = np.divide(count_occur, count_trys, out = outerr, where = count_trys != 0)
+		np.savetxt("out_stats.txt", out)
 
-t1 = time.time()
-out = Completeness(niter = 1000, treshold = 0.001, board_type = 'gauss', rec_type = 'gauss')
-t2 = time.time()
-print((t2-t1)/60)
+		t2 = time.time() - t1
+		tot_time = tot_time + t2
+		avg_time = tot_time/(i+1)
+		print("Average Time %.1f sec, ETA %i min" %(avg_time, avg_time*(niter - (i+1))/60))
+
+	return out
+
+tstart = time.time()
+out = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', rec_type = 'gauss')
+tend = time.time()
+print((tend-tstart)/60)
 PixelPlot(out)
 plt.show()
-choice = input("Save? ")
-if choice == 'y':
-	np.savetxt("out_stats.txt", out)
