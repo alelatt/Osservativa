@@ -31,32 +31,38 @@ def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectra
 
 
 def Visualise(board):
+	PixelPlot(board)
 	points = np.sort(board.flatten())
 	plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 	plt.hist(points, bins = 25)
 	plt.show()
 
-	cut = float(input("Cut at: "))
+	choice = input("Want to cut? (y/n) ")
+	if choice == 'y':
+		cut = float(input("Cut at: "))
 
-	under = np.copy(board)
-	over = np.copy(board)
+		under = np.copy(board)
+		over = np.copy(board)
 
-	under[board < cut] = 1
-	over[board < cut] = 0
-	under[board >= cut] = 0
-	over[board >= cut] = 1
+		under[board < cut] = 1
+		over[board < cut] = 0
+		under[board >= cut] = 0
+		over[board >= cut] = 1
 
-	PixelPlot(under, color_scheme = 'gray')
-	PixelPlot(over, color_scheme = 'gray')
-	plt.show()
+		PixelPlot(under, color_scheme = 'gray')
+		PixelPlot(over, color_scheme = 'gray')
+		plt.show()
 
-	under_p = points[points < cut]
-	over_p = points[points >= cut]
-	print("Under treshold: %.3f pm %.3f" %(np.mean(under_p), np.std(under_p)))
-	print("Over treshold: %.3f pm %.3f" %(np.mean(over_p), np.std(over_p)))
+		under_p = points[points < cut]
+		over_p = points[points >= cut]
+		print("Under treshold mean: %.3f pm %.3f" %(np.mean(under_p), np.std(under_p)))
+		print("Over treshold mean: %.3f pm %.3f" %(np.mean(over_p), np.std(over_p)))
+
+	else:
+		print("Mean: %.3f pm %.3f" %(np.mean(board), np.std(board)))
 
 	return
 
-lucy = np.genfromtxt("out_stats_1000_70_l.txt")
+lucy = np.genfromtxt("out_stats_5000_70_l.txt")
 
 Visualise(lucy)
