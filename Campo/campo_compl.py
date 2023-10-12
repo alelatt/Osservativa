@@ -39,7 +39,7 @@ Mmax = 5
 Lmin = 10
 
 #Image modifier constants
-sigma = 2
+sigma = 3
 backgr = 10
 
 
@@ -533,7 +533,7 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gau
 	return out
 
 tstart = time.time()
-out = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', rec_type = 'gauss')
+out = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', rec_type = 'lucy')
 tend = time.time()
 print((tend-tstart)/60)
 PixelPlot(out)

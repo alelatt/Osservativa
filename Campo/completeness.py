@@ -9,7 +9,7 @@ from skimage.restoration import richardson_lucy
 import os
 import time
 
-def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectral'):
+def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectral', color_bounds = [0,1]):
 	"""
 	Makes a colormap plot of the given board
 
@@ -24,7 +24,7 @@ def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectra
 	ax = f.add_subplot(1,1,1)
 	ax.set_title(title)
 	cmap = plt.get_cmap(color_scheme)
-	im = ax.pcolormesh(board, cmap = cmap, norm = color_scale)
+	im = ax.pcolormesh(board, cmap = cmap, norm = color_scale, vmin = color_bounds[0], vmax = color_bounds[1])
 	f.colorbar(im, ax=ax)
 
 	return
@@ -55,11 +55,40 @@ def Visualise(board):
 
 		under_p = points[points < cut]
 		over_p = points[points >= cut]
-		print("Under treshold mean: %.3f pm %.3f" %(np.mean(under_p), np.std(under_p)))
-		print("Over treshold mean: %.3f pm %.3f" %(np.mean(over_p), np.std(over_p)))
+
+		mean_under = np.mean(under_p)
+		sigma_under = np.std(under_p)
+		mean_over = np.mean(over_p)
+		sigma_over = np.std(over_p)
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(under_p, bins = 25)
+		plt.axvline(mean_under, color = 'k')
+		plt.axvline(mean_under + sigma_under, color = 'r')
+		plt.axvline(mean_under - sigma_under, color = 'r')
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(over_p, bins = 25)
+		plt.axvline(mean_over, color = 'k')
+		plt.axvline(mean_over + sigma_over, color = 'r')
+		plt.axvline(mean_over - sigma_over, color = 'r')
+		plt.show()
+
+		print("Under treshold mean: %.3f pm %.3f" %(mean_under, sigma_under))
+		print("Over treshold mean: %.3f pm %.3f" %(mean_over, sigma_over))
 
 	else:
-		print("Mean: %.3f pm %.3f" %(np.mean(board), np.std(board)))
+		mean = np.mean(points)
+		sigma = np.std(points)
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(points, bins = 25)
+		plt.axvline(mean, color = 'k')
+		plt.axvline(mean + sigma, color = 'r')
+		plt.axvline(mean - sigma, color = 'r')
+		plt.show()
+
+		print("Mean: %.3f pm %.3f" %(np.mean(points), np.std(points)))
 
 	return
 
