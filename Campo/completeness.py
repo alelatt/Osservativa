@@ -92,6 +92,8 @@ def Visualise(board):
 
 	return
 
-lucy = np.genfromtxt("out_stats_5000_70_l.txt")
+os.chdir('./backgauss')
 
-Visualise(lucy)
+compl = np.genfromtxt("out_stats_5000_70_l.txt")
+
+Visualise(compl)

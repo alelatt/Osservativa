@@ -39,7 +39,7 @@ Mmax = 5
 Lmin = 10
 
 #Image modifier constants
-sigma = 3
+sigma = 2
 backgr = 10
 
 
@@ -380,21 +380,22 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 	saveg = gnext
 
 	i = 1
+	min_index = 1
+	min_chisq = chisq
 	while True:
 		conv_g = convolve(gnext, PSF_board, mode = 'same') + 1e-12
 		f_g = convolve(g0/conv_g, np.transpose(PSF_board), mode = 'same')
 		gnext = gnext*f_g
 		
 		chisq = np.append(chisq, ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset)))
-		if ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset)) == np.min(chisq):
+		if chisq[-1] < min_chisq:
 			saveg = gnext
-
-		prev_g = gnext
-		i = i + 1
+			min_index = i
+			min_chisq = chisq[-1]
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
-		if i == reps:
+		if (i - min_index == reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0])))
 
@@ -409,6 +410,9 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 			return saveg
 
+		prev_g = gnext
+		i = i + 1
+
 
 def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 	print("\nRunning Reconstruction")
@@ -419,7 +423,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 	chisq = [ChiSq(board, gaussian_filter(fitboard + offset, sigma = sigma, mode = 'constant', cval = offset))]
 
-	for i in range(0, reps):
+	i = 1
+	min_index = 1
+	min_chisq = chisq
+	while True:
 		[xp,yp] = np.where(image == image.max())
 
 		xp = int(xp[0])
@@ -447,8 +454,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		fitboard[xmin:xmax + 1, ymin:ymax + 1] = fitboard[xmin:xmax + 1, ymin:ymax + 1] + PSFboard
 		chisq = np.append(chisq, ChiSq(board, gaussian_filter(fitboard + offset, sigma = sigma, mode = 'constant', cval = offset)))
-		if chisq[-1] == np.min(chisq):
+		if chisq[-1] < min_chisq:
 			saveboard = fitboard
+			min_index = i
+			min_chisq = chisq[-1]
 
 		if sigma >= 1e-4:
 			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.) + offset
@@ -457,20 +466,22 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
+		if (i - min_index == reps/3) or (i == reps):
+			if debug == True:
+				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
 
-	if debug == True:
-		print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
+				plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+				plt.plot(chisq, '-k')
+				plt.title(r'$\chi^2$ vs Number of Iteration')
+				plt.xlabel("Number of Iteration")
+				plt.ylabel(r'$\chi^2$')
+				plt.yscale('log')
+				plt.show()
+				plt.close('all')
 
-		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
-		plt.plot(chisq, '-k')
-		plt.title(r'$\chi^2$ vs Number of Iteration')
-		plt.xlabel("Number of Iteration")
-		plt.ylabel(r'$\chi^2$')
-		plt.yscale('log')
-		plt.show()
-		plt.close('all')
+			return saveboard
 
-	return saveboard
+		i = i + 1
 
 
 def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gauss'):
@@ -492,7 +503,7 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gau
 			img = gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0)
 		elif board_type == 'poisson':
 			img = np.random.poisson(board)
-		elif board_type == 'bakgauss':
+		elif board_type == 'backgauss':
 			img = gaussian_filter(board + backgr, sigma = sigma, mode = 'constant', cval = backgr)
 		else:
 			img = board
@@ -533,7 +544,7 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gau
 	return out
 
 tstart = time.time()
-out = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', rec_type = 'lucy')
+out = Completeness(niter = 5000, treshold = 0.001, board_type = 'backgauss', rec_type = 'lucy')
 tend = time.time()
 print((tend-tstart)/60)
 PixelPlot(out)

@@ -335,25 +335,11 @@ def FindPSF(board_in, nstars = 2 , sigma_min = 1, crowded = False, debug = False
 	return PSF_board, sig, background
 
 
-def Difference(a,b):
-	"""
-	Computes the "relative difference" between two arrays of the same dimensions
-
-	Inputs:
-		a,b	Arrays (must have same dimensions)
-
-	Outputs:
-		Relative difference computed as the sum over the absolute value of each element of the array (a-b) weighted by the sum of all elements of array a (assumed positive)
-	"""
-
-	return np.sum(np.abs(a-b))/np.sum(a)
-
-
 def ChiSq(a, b):
 	return np.sum((a - b)**2)
 
 
-def Lucy(board, PSF_board, sigma, offset, reps = 12000, thresh = 1e-7, use_thresh = False, use_chisq = True, debug = False):
+def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 	"""
 	Applies Lucy reconstruction
 
@@ -383,63 +369,42 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, thresh = 1e-7, use_thres
 	conv_g = convolve(g0, PSF_board, mode = 'same') + 1e-12
 	gnext = g0*(convolve(g0/conv_g, np.transpose(PSF_board), mode = 'same'))
 	prev_g = gnext
-	stop_cond_g = 100.
 	chisq = [ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset))]
 	saveg = gnext
 
 	i = 1
+	min_index = 1
+	min_chisq = chisq
 	while True:
 		conv_g = convolve(gnext, PSF_board, mode = 'same') + 1e-12
 		f_g = convolve(g0/conv_g, np.transpose(PSF_board), mode = 'same')
 		gnext = gnext*f_g
-		stop_cond_g = Difference(prev_g, gnext)
 		
 		chisq = np.append(chisq, ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset)))
-		if ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset)) == np.min(chisq):
+		if chisq[-1] < min_chisq:
 			saveg = gnext
+			min_index = i
+			min_chisq = chisq[-1]
+
+		if i % 100 == 0:
+			print("\t%i%% "%(100*i/reps), end = "\r")
+		if (i - min_index == reps/3) or (i == reps):
+			if debug == True:
+				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0])))
+
+				plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+				plt.plot(chisq, '-k')
+				plt.title(r'$\chi^2$ vs Number of Iteration')
+				plt.xlabel("Number of Iteration")
+				plt.ylabel(r'$\chi^2$')
+				plt.yscale('log')
+				plt.show()
+				plt.close('all')
+
+			return saveg
 
 		prev_g = gnext
 		i = i + 1
-
-		if use_thresh == True:
-			if i % 100 == 0:
-				print(i, stop_cond_g, end = "\r")
-			if stop_cond_g < thresh:
-				if debug == True:
-					plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
-					plt.plot(chisq, '-k')
-					plt.title(r'$\chi^2$ vs Number of Iteration')
-					plt.xlabel("Number of Iteration")
-					plt.ylabel(r'$\chi^2$')
-					plt.yscale('log')
-					plt.show()
-					plt.close('all')
-
-				if use_chisq == True:
-					return saveg
-				else:
-					return gnext
-
-		else:
-			if i % 100 == 0:
-				print("\t%i%% "%(100*i/reps), end = "\r")
-			if i == reps:
-				if debug == True:
-					print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0])))
-
-					plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
-					plt.plot(chisq, '-k')
-					plt.title(r'$\chi^2$ vs Number of Iteration')
-					plt.xlabel("Number of Iteration")
-					plt.ylabel(r'$\chi^2$')
-					plt.yscale('log')
-					plt.show()
-					plt.close('all')
-
-				if use_chisq == True:
-					return saveg
-				else:
-					return gnext
 
 
 def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
@@ -451,7 +416,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 	chisq = [ChiSq(board, gaussian_filter(fitboard + offset, sigma = sigma, mode = 'constant', cval = offset))]
 
-	for i in range(0, reps):
+	i = 1
+	min_index = 1
+	min_chisq = chisq
+	while True:
 		[xp,yp] = np.where(image == image.max())
 
 		xp = int(xp[0])
@@ -479,8 +447,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		fitboard[xmin:xmax + 1, ymin:ymax + 1] = fitboard[xmin:xmax + 1, ymin:ymax + 1] + PSFboard
 		chisq = np.append(chisq, ChiSq(board, gaussian_filter(fitboard + offset, sigma = sigma, mode = 'constant', cval = offset)))
-		if chisq[-1] == np.min(chisq):
+		if chisq[-1] < min_chisq:
 			saveboard = fitboard
+			min_index = i
+			min_chisq = chisq[-1]
 
 		if sigma >= 1e-4:
 			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.) + offset
@@ -489,20 +459,22 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
+		if (i - min_index == reps/3) or (i == reps):
+			if debug == True:
+				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
 
-	if debug == True:
-		print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
+				plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+				plt.plot(chisq, '-k')
+				plt.title(r'$\chi^2$ vs Number of Iteration')
+				plt.xlabel("Number of Iteration")
+				plt.ylabel(r'$\chi^2$')
+				plt.yscale('log')
+				plt.show()
+				plt.close('all')
 
-		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
-		plt.plot(chisq, '-k')
-		plt.title(r'$\chi^2$ vs Number of Iteration')
-		plt.xlabel("Number of Iteration")
-		plt.ylabel(r'$\chi^2$')
-		plt.yscale('log')
-		plt.show()
-		plt.close('all')
+			return saveboard
 
-	return saveboard
+		i = i + 1
 
 
 
@@ -592,71 +564,70 @@ plt.close('all')
 
 
 #################	NO EFFECTS	#################
-"""
+'''
 board_base_PSF, sigma_base, offset_base = FindPSF(board_base, nstars = 5 , sigma_min = 0, crowded = True, debug = False)
 board_base_rec1 = Reconstruction(board_base, sigma_base, offset_base, reps = 12000, debug = True)
-board_base_rec2 = Lucy(board_base, board_base_PSF, sigma_base, offset_base, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = False, debug = True)
+board_base_rec2 = Lucy(board_base, board_base_PSF, sigma_base, offset_base, reps = 12000, debug = True)
 board_base_rec1 = FictitiousStars(board_base, board_base_rec1, out_needed = True)
 board_base_rec2 = FictitiousStars(board_base, board_base_rec2, out_needed = True)
 PixelPlot(board_base_rec1, "Base Board Reconstruction (PSF Fit)")
 PixelPlot(board_base_rec2, "Base Board Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-"""
+'''
 
 #################	GAUSSIAN PSF	#################
-"""
+'''
 board_gauss = gaussian_filter(board_base, sigma = sigma, mode = 'constant', cval = 0)
 board_gauss_PSF, sigma_gauss, offset_gauss = FindPSF(board_gauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
 board_gauss_rec1 = Reconstruction(board_gauss, sigma_gauss, offset_gauss, reps = 12000, debug = True)
-board_gauss_rec2 = Lucy(board_gauss, board_gauss_PSF, sigma_gauss, offset_gauss, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = True, debug = True)
+board_gauss_rec2 = Lucy(board_gauss, board_gauss_PSF, sigma_gauss, offset_gauss, reps = 12000, debug = True)
 board_gauss_rec1 = FictitiousStars(board_base, board_gauss_rec1, out_needed = True)
 board_gauss_rec2 = FictitiousStars(board_base, board_gauss_rec2, out_needed = True)
 PixelPlot(board_gauss_rec1, "Gaussian PSF Reconstruction (PSF Fit)")
 PixelPlot(board_gauss_rec2, "Gaussian PSF Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-"""
+'''
 
 #################	POISSON NOISE	#################
-"""
+'''
 board_poiss = np.random.poisson(board_base)
 board_poiss_PSF, sigma_poiss, offset_poiss = FindPSF(board_poiss, nstars = 5, sigma_min = 0, crowded = True, debug = False)
 board_poiss_rec1 = Reconstruction(board_poiss, sigma_poiss, offset_poiss, reps = 12000, debug = True)
-board_poiss_rec2 = Lucy(board_poiss, board_poiss_PSF, sigma_poiss, offset_poiss, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = True, debug = True)
+board_poiss_rec2 = Lucy(board_poiss, board_poiss_PSF, sigma_poiss, offset_poiss, reps = 12000, debug = True)
 board_poiss_rec1 = FictitiousStars(board_base, board_poiss_rec1, out_needed = True)
 board_poiss_rec2 = FictitiousStars(board_base, board_poiss_rec2, out_needed = True)
 PixelPlot(board_poiss_rec1, "Poisson Noise Reconstruction (PSF Fit)")
 PixelPlot(board_poiss_rec2, "Poisson Noise Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-"""
+'''
 
 #################	POISSON NOISE + GAUSSIAN PSF	#################
-
+'''
 board_gauss = gaussian_filter(board_base, sigma = sigma, mode = 'constant', cval = 0)
 board_poissgauss = np.random.poisson(board_gauss)
 board_poissgauss_PSF, sigma_poissgauss, offset_poissgauss = FindPSF(board_poissgauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
 board_poissgauss_rec1 = Reconstruction(board_poissgauss, sigma_poissgauss, offset_poissgauss, reps = 12000, debug = True)
-board_poissgauss_rec2 = Lucy(board_poissgauss, board_poissgauss_PSF, sigma_poissgauss, offset_poissgauss, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = True, debug = True)
+board_poissgauss_rec2 = Lucy(board_poissgauss, board_poissgauss_PSF, sigma_poissgauss, offset_poissgauss, reps = 12000, debug = True)
 board_poissgauss_rec1 = FictitiousStars(board_base, board_poissgauss_rec1, out_needed = True)
 board_poissgauss_rec2 = FictitiousStars(board_base, board_poissgauss_rec2, out_needed = True)
 PixelPlot(board_poissgauss_rec1, "Poisson Noise + Gaussian PSF Reconstruction (PSF Fit)")
 PixelPlot(board_poissgauss_rec2, "Poisson Noise + Gaussian PSF Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-
+'''
 
 #################	BACKGROUND + GAUSSIAN PSF	#################
-"""
+
 board_backgauss = gaussian_filter(board_base + backgr, sigma = sigma, mode = 'constant', cval = backgr)
-board_backgauss_PSF, sigma_backgauss, offset_backgauss = FindPSF(board_backgauss, nstars = 3, sigma_min = 1, crowded = True, debug = False)
+board_backgauss_PSF, sigma_backgauss, offset_backgauss = FindPSF(board_backgauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
 board_backgauss_rec1 = Reconstruction(board_backgauss, sigma_backgauss, offset_backgauss, reps = 12000, debug = True)
-board_backgauss_rec2 = Lucy(board_backgauss, board_backgauss_PSF, sigma_backgauss, offset_backgauss, reps = 12000, thresh = 1e-6, use_thresh = False, use_chisq = True, debug = True)
+board_backgauss_rec2 = Lucy(board_backgauss, board_backgauss_PSF, sigma_backgauss, offset_backgauss, reps = 12000, debug = True)
 board_backgauss_rec1 = FictitiousStars(board_base, board_backgauss_rec1, out_needed = True)
 board_backgauss_rec2 = FictitiousStars(board_base, board_backgauss_rec2, out_needed = True)
 PixelPlot(board_backgauss_rec1, "Uniform Background + Gaussian PSF Reconstruction (PSF Fit)")
 PixelPlot(board_backgauss_rec2, "Uniform Background + Gaussian PSF Reconstruction (Lucy)")
 plt.show()
 plt.close('all')
-"""
