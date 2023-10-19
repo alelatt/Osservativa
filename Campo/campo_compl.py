@@ -484,68 +484,109 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		i = i + 1
 
 
-def Completeness(niter = 100, treshold = 0.001, board_type = '', rec_type = 'gauss'):
-	count_trys = np.zeros((grid_len, grid_len))
-	count_occur = np.zeros((grid_len, grid_len))
+def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold = 0.1):
+	path = './' + board_type + '_' + str(N) + '_' + str(niter)
+	path_b = path + '/boards'
+	path_g = path + '/gauss'
+	path_l = path + '/lucy'
 
-	tot_time = 0
+	if os.path.isdir(path) == False:
+		os.makedirs(path)
+		os.makedirs(path_b)
+		os.makedirs(path_g)
+		os.makedirs(path_l)
+
+		tot_time = 0
+
+		for i in range(0,niter):
+			t1 = time.time()
+			board = GeneratePixels()
+
+			np.savetxt(path_b + '/board_' + str(i) + '.txt', board)
+
+			img = None
+			psf = None
+			sigma_psf = None
+			offset = None
+
+			if board_type == 'gauss':
+				img = gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0)
+			elif board_type == 'poisson':
+				img = np.random.poisson(board)
+			elif board_type == 'backgauss':
+				img = gaussian_filter(board + backgr, sigma = sigma, mode = 'constant', cval = backgr)
+			else:
+				img = board
+
+			psf, sigma_psf, offset = FindPSF(img, nstars = 5, sigma_min = 1, crowded = True)
+
+			board_out_g = Reconstruction(img, sigma_psf, offset, reps = 4000)
+			board_out_l = Lucy(img, psf, sigma_psf, offset, reps = 4000)
+
+			np.savetxt(path_g + '/out_' + str(i) + '.txt', board_out_g)
+			np.savetxt(path_l + '/out_' + str(i) + '.txt', board_out_l)
+
+			t2 = time.time() - t1
+			tot_time = tot_time + t2
+			avg_time = tot_time/(i+1)
+			if i % 10 == 0:
+				print("\n\n------Average Time %.1f sec, ETA %i min\n" %(avg_time, avg_time*(niter - (i+1))/60))
+			else:
+				print('\n')
+
+	count_trys = np.zeros((grid_len, grid_len))
+	count_occur_g = np.zeros((grid_len, grid_len))
+	count_occur_l = np.zeros((grid_len, grid_len))
 
 	for i in range(0,niter):
-		t1 = time.time()
-		board = GeneratePixels()
-
-		img = None
-		psf = None
-		sigma_psf = None
-		offset = None
-
-		if board_type == 'gauss':
-			img = gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0)
-		elif board_type == 'poisson':
-			img = np.random.poisson(board)
-		elif board_type == 'backgauss':
-			img = gaussian_filter(board + backgr, sigma = sigma, mode = 'constant', cval = backgr)
-		else:
-			img = board
+		board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
+		board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
+		board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
 
 		trysum = np.copy(board)
 		trysum[trysum > 0] = 1
 		count_trys = count_trys + trysum
 
-		psf, sigma_psf, offset = FindPSF(img, nstars = 5, sigma_min = 1, crowded = True)
+		out_copy_g = np.copy(board_out_g)
+		out_copy_g[out_copy_g < treshold*np.max(out_copy_g)] = 0
+		out_copy_g[out_copy_g >= treshold*np.max(out_copy_g)] = 1
 
-		board_out = None
-		if rec_type == 'gauss':
-			board_out = Reconstruction(img, sigma_psf, offset, reps = 4000)
-		if rec_type == 'lucy':
-			board_out = Lucy(img, psf, sigma_psf, offset, reps = 4000)
+		lumin_temp_g = np.zeros((grid_len, grid_len))
+		lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
 
-		binary_out = np.copy(board_out)
-		binary_out[binary_out < treshold*np.max(binary_out)] = 0
-		binary_out[binary_out >= treshold*np.max(binary_out)] = 1
+		temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
 
-		occursum = 2*trysum - binary_out
-		occursum[occursum <= 0] = 0
-		occursum[occursum >=2] = 0
-		count_occur = count_occur + occursum
+		occursum_g = np.zeros((grid_len, grid_len))
+		occursum_g[temp_out_g == 3] = 1
+		count_occur_g = count_occur_g + occursum_g
 		
-		print("\n",i+1,"\n")
+		out_copy_l = np.copy(board_out_l)
+		out_copy_l[out_copy_l < treshold*np.max(out_copy_l)] = 0
+		out_copy_l[out_copy_l >= treshold*np.max(out_copy_l)] = 1
+
+		lumin_temp_l = np.zeros((grid_len, grid_len))
+		lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
+
+		temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
+
+		occursum_l = np.zeros((grid_len, grid_len))
+		occursum_l[temp_out_l == 3] = 1
+		count_occur_l = count_occur_l + occursum_l
 		
-		outerr = np.zeros(np.shape(board))
+	outerr = np.zeros(np.shape(board))
 
-		out = np.divide(count_occur, count_trys, out = outerr, where = count_trys != 0)
-		np.savetxt("out_stats.txt", out)
+	out_gauss = np.divide(np.copy(count_occur_g), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+	out_lucy = np.divide(np.copy(count_occur_l), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+	np.savetxt(path + '/out_stats_gauss.txt', out_gauss)
+	np.savetxt(path + '/out_stats_lucy.txt', out_lucy)
 
-		t2 = time.time() - t1
-		tot_time = tot_time + t2
-		avg_time = tot_time/(i+1)
-		print("Average Time %.1f sec, ETA %i min" %(avg_time, avg_time*(niter - (i+1))/60))
+	return (out_gauss, out_lucy)
 
-	return out
 
 tstart = time.time()
-out = Completeness(niter = 5000, treshold = 0.001, board_type = 'backgauss', rec_type = 'lucy')
+out_g, out_l = Completeness(niter = 2500, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.1)
 tend = time.time()
 print((tend-tstart)/60)
-PixelPlot(out)
+PixelPlot(out_g)
+PixelPlot(out_l)
 plt.show()
