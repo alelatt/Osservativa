@@ -534,59 +534,141 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 			else:
 				print('\n')
 
-	count_trys = np.zeros((grid_len, grid_len))
-	count_occur_g = np.zeros((grid_len, grid_len))
-	count_occur_l = np.zeros((grid_len, grid_len))
+	out_gauss = None
+	out_lucy = None
 
-	for i in range(0,niter):
-		board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
-		board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
-		board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
+	if (os.path.isfile(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt') == False) or (os.path.isfile(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt') == False):
+		count_trys = np.zeros((grid_len, grid_len))
+		count_occur_g = np.zeros((grid_len, grid_len))
+		count_occur_l = np.zeros((grid_len, grid_len))
 
-		trysum = np.copy(board)
-		trysum[trysum > 0] = 1
-		count_trys = count_trys + trysum
+		print("\nComputing Completeness:")
+		for i in range(0,niter):
+			board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
+			board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
+			board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
 
-		out_copy_g = np.copy(board_out_g)
-		out_copy_g[out_copy_g < treshold*np.max(out_copy_g)] = 0
-		out_copy_g[out_copy_g >= treshold*np.max(out_copy_g)] = 1
+			trysum = np.copy(board)
+			trysum[trysum > 0] = 1
+			count_trys = count_trys + trysum
 
-		lumin_temp_g = np.zeros((grid_len, grid_len))
-		lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
+			out_copy_g = np.copy(board_out_g)
+			out_copy_g[out_copy_g < treshold*np.max(out_copy_g)] = 0
+			out_copy_g[out_copy_g >= treshold*np.max(out_copy_g)] = 1
 
-		temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
+			lumin_temp_g = np.zeros((grid_len, grid_len))
+			lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
 
-		occursum_g = np.zeros((grid_len, grid_len))
-		occursum_g[temp_out_g == 3] = 1
-		count_occur_g = count_occur_g + occursum_g
-		
-		out_copy_l = np.copy(board_out_l)
-		out_copy_l[out_copy_l < treshold*np.max(out_copy_l)] = 0
-		out_copy_l[out_copy_l >= treshold*np.max(out_copy_l)] = 1
+			temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
 
-		lumin_temp_l = np.zeros((grid_len, grid_len))
-		lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
+			occursum_g = np.zeros((grid_len, grid_len))
+			occursum_g[temp_out_g == 3] = 1
+			count_occur_g = count_occur_g + occursum_g
+			
+			out_copy_l = np.copy(board_out_l)
+			out_copy_l[out_copy_l < treshold*np.max(out_copy_l)] = 0
+			out_copy_l[out_copy_l >= treshold*np.max(out_copy_l)] = 1
 
-		temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
+			lumin_temp_l = np.zeros((grid_len, grid_len))
+			lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
 
-		occursum_l = np.zeros((grid_len, grid_len))
-		occursum_l[temp_out_l == 3] = 1
-		count_occur_l = count_occur_l + occursum_l
-		
-	outerr = np.zeros(np.shape(board))
+			temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
 
-	out_gauss = np.divide(np.copy(count_occur_g), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
-	out_lucy = np.divide(np.copy(count_occur_l), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
-	np.savetxt(path + '/out_stats_gauss.txt', out_gauss)
-	np.savetxt(path + '/out_stats_lucy.txt', out_lucy)
+			occursum_l = np.zeros((grid_len, grid_len))
+			occursum_l[temp_out_l == 3] = 1
+			count_occur_l = count_occur_l + occursum_l
+
+			if i % 10 == 0:
+				print("\t%i%% "%(100*i/niter), end = "\r")
+			
+		outerr = np.zeros(np.shape(board))
+
+		out_gauss = np.divide(np.copy(count_occur_g), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+		out_lucy = np.divide(np.copy(count_occur_l), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+		np.savetxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt', out_gauss)
+		np.savetxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt', out_lucy)
+
+	else:
+		out_gauss = np.loadtxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt')
+		out_lucy = np.loadtxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt')
 
 	return (out_gauss, out_lucy)
 
 
+def Visualise(board):
+	PixelPlot(board)
+	plt.show()
+
+	points = np.sort(board.flatten())
+	plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+	plt.hist(points, bins = 25)
+	plt.show(block = False)
+	choice = input("\nWant to cut? (y/n) ")
+
+	if choice == 'y':
+		cut = float(input("\tCut at: "))
+		plt.close('all')
+
+		under = np.copy(board)
+		over = np.copy(board)
+
+		under[board < cut] = 1
+		over[board < cut] = 0
+		under[board >= cut] = 0
+		over[board >= cut] = 1
+
+		PixelPlot(over, color_scheme = 'gray', title = 'Over-Under treshold regions')
+		plt.show()
+
+		under_p = points[points < cut]
+		over_p = points[points >= cut]
+
+		mean_under = np.mean(under_p)
+		sigma_under = np.std(under_p)
+		mean_over = np.mean(over_p)
+		sigma_over = np.std(over_p)
+		mean = np.mean(points)
+		sigma = np.std(points)
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(under_p, bins = 25)
+		plt.axvline(mean_under, color = 'k')
+		plt.axvline(mean_under + sigma_under, color = 'r')
+		plt.axvline(mean_under - sigma_under, color = 'r')
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(over_p, bins = 25)
+		plt.axvline(mean_over, color = 'k')
+		plt.axvline(mean_over + sigma_over, color = 'r')
+		plt.axvline(mean_over - sigma_over, color = 'r')
+		plt.show()
+
+		print("\n\tUnder treshold mean: %.3f pm %.3f" %(mean_under, sigma_under))
+		print("\tOver treshold mean: %.3f pm %.3f" %(mean_over, sigma_over))
+		print("\tOverall mean: %.3f pm %.3f" %(np.mean(points), np.std(points)))
+
+	else:
+		plt.close('all')
+
+		mean = np.mean(points)
+		sigma = np.std(points)
+
+		plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+		plt.hist(points, bins = 25)
+		plt.axvline(mean, color = 'k')
+		plt.axvline(mean + sigma, color = 'r')
+		plt.axvline(mean - sigma, color = 'r')
+		plt.show()
+
+		print("\n\tMean: %.3f pm %.3f" %(np.mean(points), np.std(points)))
+
+	return
+
+
+
 tstart = time.time()
-out_g, out_l = Completeness(niter = 2500, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.1)
+out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.01)
 tend = time.time()
 print((tend-tstart)/60)
-PixelPlot(out_g)
-PixelPlot(out_l)
-plt.show()
+Visualise(out_g)
+Visualise(out_l)
