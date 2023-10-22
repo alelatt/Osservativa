@@ -667,7 +667,7 @@ def Visualise(board):
 
 
 tstart = time.time()
-out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.01)
+out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'backgauss', lumin_treshold = 1)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)
