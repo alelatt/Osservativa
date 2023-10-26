@@ -993,6 +993,6 @@ if __name__ == '__main__':
 
 	mask = wav >= 450
 
-	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = False)
+	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = True)
 
 	CheckBack(wav, spav1, spav3, air1, texp1)
