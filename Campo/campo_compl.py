@@ -485,7 +485,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 
 def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold = 0.1):
-	path = './' + board_type + '_' + str(N) + '_' + str(niter)
+	path = './' + board_type + '_' + str(N) + '_' + str(sigma) + '_' + str(niter)
 	path_b = path + '/boards'
 	path_g = path + '/gauss'
 	path_l = path + '/lucy'
@@ -667,7 +667,7 @@ def Visualise(board):
 
 
 tstart = time.time()
-out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'backgauss', lumin_treshold = 1)
+out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.01)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)
