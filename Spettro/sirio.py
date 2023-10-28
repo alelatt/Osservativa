@@ -646,10 +646,10 @@ def Interactivity(image_names, lamp, flat, dark, FitFn, debug = False):
 	else:
 		hdul1 = fits.open(image_names[0])
 		rotated_ang = float(hdul1[0].header['ROT_ANG'])
-		img1_raw = np.asarray(ccd_process(CCDData(ndimage.rotate(fits.getdata(image_names[0], ext=0), -rotated_ang, reshape = False), unit = "adu"), dark_frame = dark, master_flat = flat, dark_exposure = 20*u.second, data_exposure = 10*u.second, exposure_unit = u.second, gain_corrected = False))
+		img1_raw = np.asarray(ccd_process(CCDData(ndimage.rotate(fits.getdata(image_names[0], ext=0), -rotated_ang, reshape = False), unit = "adu"), master_flat = flat, dark_frame = dark, dark_exposure = 20*u.second, data_exposure = 10*u.second, exposure_unit = u.second, gain_corrected = False))
 
 		hdul2 = fits.open(image_names[1])
-		img2_raw = np.asarray(ccd_process(CCDData(fits.getdata(image_names[1], ext=0), unit = "adu"), dark_frame = dark, master_flat = flat, dark_exposure = 20*u.second, data_exposure = 5*u.second, exposure_unit = u.second, gain_corrected = False))
+		img2_raw = np.asarray(ccd_process(CCDData(fits.getdata(image_names[1], ext=0), unit = "adu"), master_flat = flat, dark_frame = dark, dark_exposure = 20*u.second, data_exposure = 5*u.second, exposure_unit = u.second, gain_corrected = False))
 
 		lam1, spectrum_meas1, rot_ang1, x_min1, x_max1, y_c1, width1, points1 = GetSpectrum(img1_raw, lamp, calibrator, FitFn, debug)
 		lam2, spectrum_meas2, rot_ang2, x_min2, x_max2, y_c2, width2, points2 = GetSpectrum(img2_raw, lamp, calibrator, FitFn, debug)
@@ -996,3 +996,4 @@ if __name__ == '__main__':
 	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = True)
 
 	CheckBack(wav, spav1, spav3, air1, texp1)
+	CheckBack(wav, spav2, spav3, air2, texp2)
