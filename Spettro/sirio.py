@@ -3,7 +3,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy import ndimage
-from scipy.interpolate import CubicSpline, UnivariateSpline
+from scipy.interpolate import CubicSpline, splrep, splev
+from scipy.signal import savgol_filter
 import os
 from skimage import io
 from tracefns import *
@@ -613,11 +614,11 @@ def Interactivity(image_names, lamp, flat, dark, FitFn, debug = False):
 		hdul1 = fits.open(image_names[0])
 		rotated_ang = float(hdul1[0].header['ROT_ANG'])
 		texp_img1 = float(hdul1[0].header['EXPOSURE'])
-		img1_raw = np.asarray(ccd_process(CCDData(ndimage.rotate(fits.getdata(image_names[0], ext=0), -rotated_ang, reshape = False), unit = "adu"), dark_frame = dark, dark_exposure = texp_dark*u.second, data_exposure = texp_img1*u.second,  gain_corrected = False))
+		img1_raw = np.asarray(ccd_process(CCDData(ndimage.rotate(fits.getdata(image_names[0], ext=0), -rotated_ang, reshape = False), unit = "adu"), master_flat = flat, dark_frame = dark, dark_exposure = texp_dark*u.second, data_exposure = texp_img1*u.second,  gain_corrected = False))
 
 		hdul2 = fits.open(image_names[1])
 		texp_img2 = float(hdul2[0].header['EXPOSURE'])
-		img2_raw = np.asarray(ccd_process(CCDData(fits.getdata(image_names[1], ext=0), unit = "adu"), dark_frame = dark, dark_exposure = texp_dark*u.second, data_exposure = texp_img2*u.second, gain_corrected = False))
+		img2_raw = np.asarray(ccd_process(CCDData(fits.getdata(image_names[1], ext=0), unit = "adu"), master_flat = flat, dark_frame = dark, dark_exposure = texp_dark*u.second, data_exposure = texp_img2*u.second, gain_corrected = False))
 
 		rot_img1 = ndimage.rotate(img1_raw, rot_ang1, reshape = False)
 		rot_img2 = ndimage.rotate(img2_raw, rot_ang2, reshape = False)
@@ -848,15 +849,15 @@ def Response(wavelength, spectrum1, spectrum2, spectrum3, airmass1, airmass2, te
 
 	instr_0_1 = spectrum1/(spectrum3*(trans_0**airmass1)*A1*texp1)
 	instr_0_2 = spectrum2/(spectrum3*(trans_0**airmass2)*A2*texp2)
-	spl0 = UnivariateSpline(wavelength, np.mean(np.vstack((instr_0_1, instr_0_2)), axis = 0))
-	spl0.set_smoothing_factor(0.00001)
-	instr_0 = spl0(wavelength)
+	instr_0 = savgol_filter(np.mean(np.vstack((instr_0_1, instr_0_2)), axis = 0), 30, 5)
 
 	if debug == True:
 		plt.figure(dpi = 150, layout = 'tight')
 		plt.title("Intensity Ratio")
 		plt.plot(wavelength, ratio, '.k', label = "$I_1 / I_2$")
 		plt.legend(loc = 'best')
+		plt.xlabel("$\lambda$ [nm]")
+		plt.ylabel("$I_1 / I_2$")
 
 		plt.figure(dpi = 150, layout = 'tight')
 		plt.title("Optical Depth")
@@ -866,12 +867,16 @@ def Response(wavelength, spectrum1, spectrum2, spectrum3, airmass1, airmass2, te
 		plt.plot(lin, ExpFit(lin, *pars), 'b', label = r"Fit over $\tau'$")
 		plt.plot(lin, AtmosphericTau(lin), '--g', label = r"Reference $\tau$")
 		plt.legend(loc = 'best')
+		plt.xlabel("$\lambda$ [nm]")
+		plt.ylabel("Optical Depth")
 
 		plt.figure(dpi = 150, layout = 'tight')
 		plt.title("Atmospheric Transmittance")
 		plt.plot(wavelength, trans_0, 'r', label = "Computed Transmittance")
 		plt.plot(lin, np.exp(-AtmosphericTau(lin)), '--g', label = "Reference Transmittance")
 		plt.legend(loc = 'best')
+		plt.xlabel("$\lambda$ [nm]")
+		plt.ylabel("Atmospheric Transmittance")
 
 		plt.figure(dpi = 150, layout = 'tight')
 		plt.title("Instrumental Response")
@@ -879,11 +884,15 @@ def Response(wavelength, spectrum1, spectrum2, spectrum3, airmass1, airmass2, te
 		plt.plot(wavelength, instr_0_2, 'b', label = "Instrumental Response from spectrum 2")
 		plt.plot(wavelength, instr_0, '--k', label = "Averaged and smoothed Instrumental Response")
 		plt.legend(loc = 'best')
+		plt.xlabel("$\lambda$ [nm]")
+		plt.ylabel("Instr. Resp. [counts/(erg $s^{-1}$ $cm^{-2}$ $nm^{-1}$ $10^{17}$)]")
 
 		plt.figure(dpi = 150, layout = 'tight')
 		plt.title("Total Response Function at 1 airmass and 1s exposure")
 		plt.plot(wavelength, trans_0*instr_0, label = "Total Response Function")
 		plt.legend(loc = 'best')
+		plt.xlabel("$\lambda$ [nm]")
+		plt.ylabel("Total Resp. [counts/(erg $s^{-1}$ $cm^{-2}$ $nm^{-1}$ $10^{17}$)]")
 
 		plt.show()
 		plt.close('all')
@@ -894,10 +903,10 @@ def Response(wavelength, spectrum1, spectrum2, spectrum3, airmass1, airmass2, te
 	if choice == 'y':
 		np.savetxt("response.txt", resp_array.T, delimiter = '\t', fmt = ['%i', '%.8f', '%.8f'], header = "Colums are [wavelength, atmospheric transmission (airmass = 1), instrument response (exposure time = 0)]")
 
-	return trans_0, instr_0
+	return trans_0, instr_0, A1, A2
 
 
-def CheckBack(wavelength, spectrum, vega, airmass, texp):
+def CheckBack(wavelength, spectrum, vega, airmass, texp, A):
 	"""
 	Checks correct computation of response functions by comparing corrected spectrum and reference Vega spectrum
 
@@ -922,7 +931,7 @@ def CheckBack(wavelength, spectrum, vega, airmass, texp):
 	mask_img = (wavelength >= low) & (wavelength <= high)
 	mask_resp = (resp_wave >= low) & (resp_wave <= high)
 
-	spectrum_corr = spectrum[mask_img]/(instr_0[mask_resp]*texp*(trans_0[mask_resp]**airmass))
+	spectrum_corr = spectrum[mask_img]/(instr_0[mask_resp]*texp*(trans_0[mask_resp]**airmass)*A)
 
 	plt.figure(dpi = 150, layout = 'tight')
 	plt.title("Corrected Spectrum and Vega (used as reference)")
@@ -930,7 +939,7 @@ def CheckBack(wavelength, spectrum, vega, airmass, texp):
 	plt.plot(wavelength[mask_img], vega[mask_img], 'r', label = "Vega")
 	plt.legend(loc = 'best')
 	plt.xlabel(r"$\lambda$ [nm]")
-	plt.ylabel(r"Flux [erg $s^{-1}$ $cm^{-2}$ A $10^{16}$]")
+	plt.ylabel(r"Flux [erg $s^{-1}$ $cm^{-2}$ $nm^{-1}$ $10^{17}$]")
 	plt.show()
 	return
 
@@ -976,8 +985,9 @@ if __name__ == '__main__':
 	wav, spav1, spav2 = InterpolateSpectra(wavelength1, spectrum1, wavelength2, spectrum2, bin_size)
 
 	vega_wave, vega_flux = np.genfromtxt("vega_std.txt", usecols = (0,1), unpack = True, dtype = (float, float))
-	spl = CubicSpline(vega_wave/10, vega_flux)
-	spav3 = spl(wav)
+	wav_v, spav_v = BinSpectrum(vega_wave/10, vega_flux, bin_size)
+	spav3 = spav_v[(wav_v >= np.min(wav)) & (wav_v <= np.max(wav))]
+
 	'''
 	SpectrumPlot(wav, spav1, xunit = "nm", title = "Interpolated Spectrum from "sirius.fit")
 	SpectrumPlot(wav, spav2, xunit = "nm", title = "Interpolated Spectrum from "sirius2.fit")
@@ -991,9 +1001,9 @@ if __name__ == '__main__':
 	texp1 = float(fits.open(image_names[0])[0].header['EXPOSURE'])
 	texp2 = float(fits.open(image_names[1])[0].header['EXPOSURE'])
 
-	mask = wav >= 450
+	mask = (wav >= 450)# & (wav <= 700)
 
-	transmittance_0, instrumental_0 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = True)
+	transmittance_0, instrumental_0, A1, A2 = Response(wav[mask], spav1[mask], spav2[mask], spav3[mask], air1, air2, texp1, texp2, debug = True)
 
-	CheckBack(wav, spav1, spav3, air1, texp1)
-	CheckBack(wav, spav2, spav3, air2, texp2)
+	CheckBack(wav, spav1, spav3, air1, texp1, A1)
+	CheckBack(wav, spav2, spav3, air2, texp2, A2)
