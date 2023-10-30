@@ -32,7 +32,7 @@ grid_len = 100
 
 #Stars generator constants
 exp = 2.35
-M0 = 0.35
+M0 = 0.4
 Mmax = 5
 
 #Luminosity scaling factor
@@ -67,11 +67,11 @@ def GenerateSequence():
 
 		if M[i] < 0.4:
 			L[i] = 0.23*(M[i]**(2.3))
-		elif M[i] > 0.4 and M[i] < 2:
+		elif M[i] >= 0.4 and M[i] < 2:
 			L[i] = M[i]**4
-		elif M[i] > 2 and M[i] < 55:
+		elif M[i] >= 2 and M[i] < 55:
 			L[i] = 1.4*(M[i]**(1.5))
-		elif M[i] > 55:
+		elif M[i] >= 55:
 			L[i] = 32000*M[i]
 		else:
 			print("ERROR GENERATING M", M[i], i)
@@ -103,7 +103,7 @@ def GeneratePixels():
 		for j in range(0, grid_len):
 			board_base[i,j] = np.sum(data[:,2][np.where((data[:,0] >= i) & (data[:,0] < i+1) & (data[:,1] >= j) & (data[:,1] < j+1))])
 
-	board_base = np.round(board_base * Lmin/np.min(board_base[np.where(board_base > 0)]))
+	board_base *= Lmin/(0.4**4)
 
 	#np.savetxt("board.txt", board_base)
 
@@ -190,16 +190,20 @@ def BoardToDistance(board_sect):
 
 	dist = []
 	vals = []
+	weights = []
 
 	while np.max(R_copy)>=0:
 		dist = np.append(dist, R_copy.max())
 		vals = np.append(vals, np.min(board_sect[np.where(R_copy == R_copy.max())]))
+		weights = np.append(weights, len(np.where(R_copy == R_copy.max())[0]))
 		R_copy[np.where(R_copy == R_copy.max())] = -1
 
 	dist = np.flip(dist)
 	vals = np.flip(vals)
+	weights = np.flip(weights)
 
-	return(dist, vals, center_coords)
+	return(dist, vals, weights, center_coords)
+
 
 def PSFFit(board_sect, sigma_min, debug = False):
 	"""
@@ -219,16 +223,17 @@ def PSFFit(board_sect, sigma_min, debug = False):
 		The fit is done on the set of minimum values using a 1D gaussian (see "GaussFn")
 	"""
 
-	dist, vals, center_coords = BoardToDistance(board_sect)
+	dist, vals, weights, center_coords = BoardToDistance(board_sect)
+	vals[vals < 0] = 0
 
-	[pars,covm] = curve_fit(GaussFn, dist, vals, p0 = [sigma_min,np.max(vals),np.min(vals)], bounds = ([sigma_min,0,0],[10,np.inf,np.max(vals)]))
+	[pars,covm] = curve_fit(GaussFn, dist, vals, sigma = 1/weights, p0 = [sigma_min,np.max(vals),np.min(vals)], bounds = ([sigma_min,0,0],[10,np.inf,np.max(vals)]))
 	errs = np.sqrt(covm.diagonal())
 
 	PSFboard = np.zeros(np.shape(board_sect))
 	PSFboard[center_coords[0], center_coords[1]] = pars[1]
 	
 	if pars[0] >= 1e-4:
-		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.) + pars[2]
+		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.)
 
 	if debug == True:
 		PixelPlot(PSFboard, title = "Fitted PSF onto cut board")
@@ -236,6 +241,7 @@ def PSFFit(board_sect, sigma_min, debug = False):
 		plt.close('all')
 
 	return (pars,errs, PSFboard)
+
 
 def FindPSF(board_in, nstars = 2 , sigma_min = 1, width = 10, crowded = False, debug = False):
 	"""
@@ -375,7 +381,6 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 	
 	conv_g = convolve(g0, PSF_board, mode = 'same') + 1e-12
 	gnext = g0*(convolve(g0/conv_g, np.transpose(PSF_board), mode = 'same'))
-	prev_g = gnext
 	chisq = [ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset))]
 	saveg = gnext
 
@@ -395,7 +400,7 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
-		if (i - min_index == reps/3) or (i == reps):
+		if (i - min_index >= reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0])))
 
@@ -410,12 +415,11 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 			return saveg
 
-		prev_g = gnext
 		i = i + 1
 
 
 def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
-	print("\nRunning Reconstruction")
+		print("\nRunning Reconstruction")
 
 	image = np.copy(board)
 	fitboard = np.zeros(np.shape(board))
@@ -432,7 +436,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		xp = int(xp[0])
 		yp = int(yp[0])
 
-		width = int(4*sigma)
+		width = int(np.rint(4*sigma))
 
 		xmin = np.max(np.array([xp-width, 0]))
 		xmax = np.min(np.array([xp+width,grid_len-1]))
@@ -441,9 +445,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		board_sect = np.copy(image[xmin:xmax + 1, ymin:ymax + 1])
 
-		dist, vals, center_coords = BoardToDistance(board_sect)
+		dist, vals, weights, center_coords = BoardToDistance(board_sect)
+		vals[vals < offset] = offset
 
-		[pars,covm] = curve_fit(lambda x, height:GaussFn(x, sigma, height, offset), dist, vals, p0 = np.max([0, np.max(vals)]), bounds = (0,np.inf))
+		[pars,covm] = curve_fit(lambda x, height:GaussFn(x, sigma, height, offset), dist, vals, sigma = 1/weights, p0 = np.max([0, np.max(vals)]), bounds = (0,np.inf))
 		errs = np.sqrt(covm.diagonal())
 
 		PSFboard = np.zeros(np.shape(board_sect))
@@ -460,13 +465,14 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 			min_chisq = chisq[-1]
 
 		if sigma >= 1e-4:
-			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.) + offset
+			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.)# + offset
 
 		image[xmin:xmax + 1, ymin:ymax + 1] = image[xmin:xmax + 1, ymin:ymax + 1] - PSFboard
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
-		if (i - min_index == reps/3) or (i == reps):
+
+		if (i - min_index >= reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
 
@@ -484,7 +490,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		i = i + 1
 
 
-def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold = 0.1):
+def Completeness(niter = 100, board_type = '', lumin_treshold = 0.1):
 	path = './' + board_type + '_' + str(N) + '_' + str(sigma) + '_' + str(niter)
 	path_b = path + '/boards'
 	path_g = path + '/gauss'
@@ -555,11 +561,11 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 			count_trys = count_trys + trysum
 
 			out_copy_g = np.copy(board_out_g)
-			out_copy_g[out_copy_g < treshold*np.max(out_copy_g)] = 0
-			out_copy_g[out_copy_g >= treshold*np.max(out_copy_g)] = 1
+			out_copy_g[out_copy_g > 0] = 1
+			out_copy_g[out_copy_g <= 0] = 0
 
-			lumin_temp_g = np.ones((grid_len, grid_len))
-			#lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
+			lumin_temp_g = np.zeros((grid_len, grid_len))
+			lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
 
 			temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
 
@@ -568,11 +574,11 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 			count_occur_g = count_occur_g + occursum_g
 			
 			out_copy_l = np.copy(board_out_l)
-			out_copy_l[out_copy_l < treshold*np.max(out_copy_l)] = 0
-			out_copy_l[out_copy_l >= treshold*np.max(out_copy_l)] = 1
+			out_copy_l[out_copy_l > 0] = 1
+			out_copy_l[out_copy_l <= 0] = 0
 
-			lumin_temp_l = np.ones((grid_len, grid_len))
-			#lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
+			lumin_temp_l = np.zeros((grid_len, grid_len))
+			lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
 
 			temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
 
@@ -597,7 +603,7 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 	lumin_in = []
 	lumin_g = []
 	lumin_l = []
-	'''
+
 	print("Computing Luminosity Statistics")
 	for i in range(0,niter):
 		board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
@@ -614,7 +620,7 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 	lumin_in = np.concatenate(lumin_in).ravel()
 	lumin_g = np.concatenate(lumin_g).ravel()
 	lumin_l = np.concatenate(lumin_l).ravel()
-	'''
+
 	return (out_gauss, out_lucy, lumin_in, lumin_g, lumin_l)
 
 
@@ -702,7 +708,7 @@ def LuminDistr(list_in, list_gauss, list_lucy):
 
 
 tstart = time.time()
-out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'backgauss', lumin_treshold = 1)
+out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'gauss', lumin_treshold = 1)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)

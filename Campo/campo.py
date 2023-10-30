@@ -32,7 +32,7 @@ grid_len = 100
 
 #Stars generator constants
 exp = 2.35
-M0 = 0.35
+M0 = 0.4
 Mmax = 5
 
 #Luminosity scaling factor
@@ -67,11 +67,11 @@ def GenerateSequence():
 
 		if M[i] < 0.4:
 			L[i] = 0.23*(M[i]**(2.3))
-		elif M[i] > 0.4 and M[i] < 2:
+		elif M[i] >= 0.4 and M[i] < 2:
 			L[i] = M[i]**4
-		elif M[i] > 2 and M[i] < 55:
+		elif M[i] >= 2 and M[i] < 55:
 			L[i] = 1.4*(M[i]**(1.5))
-		elif M[i] > 55:
+		elif M[i] >= 55:
 			L[i] = 32000*M[i]
 		else:
 			print("ERROR GENERATING M", M[i], i)
@@ -103,7 +103,7 @@ def GeneratePixels():
 		for j in range(0, grid_len):
 			board_base[i,j] = np.sum(data[:,2][np.where((data[:,0] >= i) & (data[:,0] < i+1) & (data[:,1] >= j) & (data[:,1] < j+1))])
 
-	board_base = np.round(board_base * Lmin/np.min(board_base[np.where(board_base > 0)]))
+	board_base *= Lmin/(0.4**4)
 
 	np.savetxt("board.txt", board_base)
 
@@ -204,6 +204,7 @@ def BoardToDistance(board_sect):
 
 	return(dist, vals, weights, center_coords)
 
+
 def PSFFit(board_sect, sigma_min, debug = False):
 	"""
 	Finds sigma for gaussian PSF from a portion of the board around a given luminosity peak
@@ -232,7 +233,7 @@ def PSFFit(board_sect, sigma_min, debug = False):
 	PSFboard[center_coords[0], center_coords[1]] = pars[1]
 	
 	if pars[0] >= 1e-4:
-		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.)# + pars[2]
+		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.)
 
 	if debug == True:
 		PixelPlot(PSFboard, title = "Fitted PSF onto cut board")
@@ -373,7 +374,6 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 	
 	conv_g = convolve(g0, PSF_board, mode = 'same') + 1e-12
 	gnext = g0*(convolve(g0/conv_g, np.transpose(PSF_board), mode = 'same'))
-	prev_g = gnext
 	chisq = [ChiSq(board, gaussian_filter(gnext + offset, sigma = sigma, mode = 'constant', cval = offset))]
 	saveg = gnext
 
@@ -393,7 +393,8 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
-		if (i - min_index == reps/3) or (i == reps):
+
+		if (i - min_index >= reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0])))
 
@@ -408,7 +409,6 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 			return saveg
 
-		prev_g = gnext
 		i = i + 1
 
 
@@ -445,9 +445,6 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		[pars,covm] = curve_fit(lambda x, height:GaussFn(x, sigma, height, offset), dist, vals, sigma = 1/weights, p0 = np.max([0, np.max(vals)]), bounds = (0,np.inf))
 		errs = np.sqrt(covm.diagonal())
 
-		#print(i, image.max(), xp, yp, pars)
-		#time.sleep(0.4)
-
 		PSFboard = np.zeros(np.shape(board_sect))
 		if sigma >= 1e-4:
 			PSFboard[center_coords[0], center_coords[1]] = pars * ((sigma**2)*2*np.pi)
@@ -468,11 +465,10 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		if i % 100 == 0:
 			print("\t%i%% "%(100*i/reps), end = "\r")
-		if (i - min_index == reps/3) or (i == reps):
+
+		if (i - min_index >= reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
-
-				PixelPlot(image)
 
 				plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 				plt.plot(chisq, '-k')
@@ -486,7 +482,6 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 			return saveboard
 
 		i = i + 1
-
 
 
 def FictitiousStars(true_board, recon_board, out_needed = False):
