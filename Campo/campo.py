@@ -7,6 +7,7 @@ from scipy.optimize import curve_fit
 from skimage.util import random_noise
 from skimage.restoration import richardson_lucy
 import os
+import time
 
 """
 Field reconstruction analysis
@@ -189,16 +190,19 @@ def BoardToDistance(board_sect):
 
 	dist = []
 	vals = []
+	weights = []
 
 	while np.max(R_copy)>=0:
 		dist = np.append(dist, R_copy.max())
 		vals = np.append(vals, np.min(board_sect[np.where(R_copy == R_copy.max())]))
+		weights = np.append(weights, len(np.where(R_copy == R_copy.max())[0]))
 		R_copy[np.where(R_copy == R_copy.max())] = -1
 
 	dist = np.flip(dist)
 	vals = np.flip(vals)
+	weights = np.flip(weights)
 
-	return(dist, vals, center_coords)
+	return(dist, vals, weights, center_coords)
 
 def PSFFit(board_sect, sigma_min, debug = False):
 	"""
@@ -218,16 +222,17 @@ def PSFFit(board_sect, sigma_min, debug = False):
 		The fit is done on the set of minimum values using a 1D gaussian (see "GaussFn")
 	"""
 
-	dist, vals, center_coords = BoardToDistance(board_sect)
+	dist, vals, weights, center_coords = BoardToDistance(board_sect)
+	vals[vals < 0] = 0
 
-	[pars,covm] = curve_fit(GaussFn, dist, vals, p0 = [sigma_min,np.max(vals),np.min(vals)], bounds = ([sigma_min,0,0],[10,np.inf,np.max(vals)]))
+	[pars,covm] = curve_fit(GaussFn, dist, vals, sigma = 1/weights, p0 = [sigma_min,np.max(vals),np.min(vals)], bounds = ([sigma_min,0,0],[10,np.inf,np.max(vals)]))
 	errs = np.sqrt(covm.diagonal())
 
 	PSFboard = np.zeros(np.shape(board_sect))
 	PSFboard[center_coords[0], center_coords[1]] = pars[1]
 	
 	if pars[0] >= 1e-4:
-		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.) + pars[2]
+		PSFboard = ((pars[0]**2)*2*np.pi)*gaussian_filter(PSFboard, sigma = pars[0], mode = 'constant', cval = 0.)# + pars[2]
 
 	if debug == True:
 		PixelPlot(PSFboard, title = "Fitted PSF onto cut board")
@@ -425,7 +430,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		xp = int(xp[0])
 		yp = int(yp[0])
 
-		width = int(4*sigma)
+		width = int(np.rint(4*sigma))
 
 		xmin = np.max(np.array([xp-width, 0]))
 		xmax = np.min(np.array([xp+width,grid_len-1]))
@@ -434,10 +439,14 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 
 		board_sect = np.copy(image[xmin:xmax + 1, ymin:ymax + 1])
 
-		dist, vals, center_coords = BoardToDistance(board_sect)
+		dist, vals, weights, center_coords = BoardToDistance(board_sect)
+		vals[vals < offset] = offset
 
-		[pars,covm] = curve_fit(lambda x, height:GaussFn(x, sigma, height, offset), dist, vals, p0 = np.max([0, np.max(vals)]), bounds = (0,np.inf))
+		[pars,covm] = curve_fit(lambda x, height:GaussFn(x, sigma, height, offset), dist, vals, sigma = 1/weights, p0 = np.max([0, np.max(vals)]), bounds = (0,np.inf))
 		errs = np.sqrt(covm.diagonal())
+
+		#print(i, image.max(), xp, yp, pars)
+		#time.sleep(0.4)
 
 		PSFboard = np.zeros(np.shape(board_sect))
 		if sigma >= 1e-4:
@@ -453,7 +462,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 			min_chisq = chisq[-1]
 
 		if sigma >= 1e-4:
-			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.) + offset
+			PSFboard = gaussian_filter(PSFboard, sigma = sigma, mode = 'constant', cval = 0.)# + offset
 
 		image[xmin:xmax + 1, ymin:ymax + 1] = image[xmin:xmax + 1, ymin:ymax + 1] - PSFboard
 
@@ -462,6 +471,8 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		if (i - min_index == reps/3) or (i == reps):
 			if debug == True:
 				print("Minimum Chi Squared = %.1f at step %i" %(np.min(chisq), int(np.where(chisq == np.min(chisq))[0][0])))
+
+				PixelPlot(image)
 
 				plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 				plt.plot(chisq, '-k')
@@ -580,8 +591,8 @@ plt.close('all')
 '''
 board_gauss = gaussian_filter(board_base, sigma = sigma, mode = 'constant', cval = 0)
 board_gauss_PSF, sigma_gauss, offset_gauss = FindPSF(board_gauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
-board_gauss_rec1 = Reconstruction(board_gauss, sigma_gauss, offset_gauss, reps = 12000, debug = True)
-board_gauss_rec2 = Lucy(board_gauss, board_gauss_PSF, sigma_gauss, offset_gauss, reps = 12000, debug = True)
+board_gauss_rec1 = Reconstruction(board_gauss, sigma_gauss, offset_gauss, reps = 4000, debug = True)
+board_gauss_rec2 = Lucy(board_gauss, board_gauss_PSF, sigma_gauss, offset_gauss, reps = 4000, debug = True)
 board_gauss_rec1 = FictitiousStars(board_base, board_gauss_rec1, out_needed = True)
 board_gauss_rec2 = FictitiousStars(board_base, board_gauss_rec2, out_needed = True)
 PixelPlot(board_gauss_rec1, "Gaussian PSF Reconstruction (PSF Fit)")
@@ -623,8 +634,8 @@ plt.close('all')
 
 board_backgauss = gaussian_filter(board_base + backgr, sigma = sigma, mode = 'constant', cval = backgr)
 board_backgauss_PSF, sigma_backgauss, offset_backgauss = FindPSF(board_backgauss, nstars = 5, sigma_min = 1, crowded = True, debug = False)
-board_backgauss_rec1 = Reconstruction(board_backgauss, sigma_backgauss, offset_backgauss, reps = 12000, debug = True)
-board_backgauss_rec2 = Lucy(board_backgauss, board_backgauss_PSF, sigma_backgauss, offset_backgauss, reps = 12000, debug = True)
+board_backgauss_rec1 = Reconstruction(board_backgauss, sigma_backgauss, offset_backgauss, reps = 4000, debug = True)
+board_backgauss_rec2 = Lucy(board_backgauss, board_backgauss_PSF, sigma_backgauss, offset_backgauss, reps = 4000, debug = True)
 board_backgauss_rec1 = FictitiousStars(board_base, board_backgauss_rec1, out_needed = True)
 board_backgauss_rec2 = FictitiousStars(board_base, board_backgauss_rec2, out_needed = True)
 PixelPlot(board_backgauss_rec1, "Uniform Background + Gaussian PSF Reconstruction (PSF Fit)")

@@ -515,6 +515,8 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 				img = np.random.poisson(board)
 			elif board_type == 'backgauss':
 				img = gaussian_filter(board + backgr, sigma = sigma, mode = 'constant', cval = backgr)
+			elif board_type == 'poissgauss':
+				img = np.random.poisson(gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0))
 			else:
 				img = board
 
@@ -556,8 +558,8 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 			out_copy_g[out_copy_g < treshold*np.max(out_copy_g)] = 0
 			out_copy_g[out_copy_g >= treshold*np.max(out_copy_g)] = 1
 
-			lumin_temp_g = np.zeros((grid_len, grid_len))
-			lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
+			lumin_temp_g = np.ones((grid_len, grid_len))
+			#lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
 
 			temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
 
@@ -569,8 +571,8 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 			out_copy_l[out_copy_l < treshold*np.max(out_copy_l)] = 0
 			out_copy_l[out_copy_l >= treshold*np.max(out_copy_l)] = 1
 
-			lumin_temp_l = np.zeros((grid_len, grid_len))
-			lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
+			lumin_temp_l = np.ones((grid_len, grid_len))
+			#lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
 
 			temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
 
@@ -592,7 +594,28 @@ def Completeness(niter = 100, treshold = 0.001, board_type = '', lumin_treshold 
 		out_gauss = np.loadtxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt')
 		out_lucy = np.loadtxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt')
 
-	return (out_gauss, out_lucy)
+	lumin_in = []
+	lumin_g = []
+	lumin_l = []
+	'''
+	print("Computing Luminosity Statistics")
+	for i in range(0,niter):
+		board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
+		board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
+		board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
+
+		lumin_in.append(board)
+		lumin_g.append(board_out_g)
+		lumin_l.append(board_out_l)
+
+		if i % 10 == 0:
+			print("\t%i%% "%(100*i/niter), end = "\r")
+
+	lumin_in = np.concatenate(lumin_in).ravel()
+	lumin_g = np.concatenate(lumin_g).ravel()
+	lumin_l = np.concatenate(lumin_l).ravel()
+	'''
+	return (out_gauss, out_lucy, lumin_in, lumin_g, lumin_l)
 
 
 def Visualise(board):
@@ -665,10 +688,23 @@ def Visualise(board):
 	return
 
 
+def LuminDistr(list_in, list_gauss, list_lucy):
+	plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
+	bins = np.linspace(0, 25000, 2000)
+	plt.hist(list_in, bins = bins, alpha = 0.5, histtype = 'stepfilled', linewidth = 1.5, label = "Starting Distribution")
+	plt.hist(list_gauss, bins = bins, alpha = 0.5, histtype = 'step', linewidth = 1.5, label = "Gaussian Reconstruction")
+	plt.hist(list_lucy, bins = bins, alpha = 0.5, histtype = 'step', linewidth = 1.5, label = "Lucy Reconstruction")
+	plt.title("Cumulative number of pixels per luminosity interval")
+	plt.xscale('log')
+	plt.yscale('log')
+	plt.legend(loc = 'best')
+	plt.show()
+
 
 tstart = time.time()
-out_g, out_l = Completeness(niter = 5000, treshold = 0.001, board_type = 'gauss', lumin_treshold = 0.01)
+out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'backgauss', lumin_treshold = 1)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)
 Visualise(out_l)
+#LuminDistr(lumin_in, lumin_g, lumin_l)
