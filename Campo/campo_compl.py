@@ -419,7 +419,7 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 
 
 def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
-		print("\nRunning Reconstruction")
+	print("\nRunning Reconstruction")
 
 	image = np.copy(board)
 	fitboard = np.zeros(np.shape(board))
@@ -603,7 +603,7 @@ def Completeness(niter = 100, board_type = '', lumin_treshold = 0.1):
 	lumin_in = []
 	lumin_g = []
 	lumin_l = []
-
+	
 	print("Computing Luminosity Statistics")
 	for i in range(0,niter):
 		board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
@@ -620,7 +620,7 @@ def Completeness(niter = 100, board_type = '', lumin_treshold = 0.1):
 	lumin_in = np.concatenate(lumin_in).ravel()
 	lumin_g = np.concatenate(lumin_g).ravel()
 	lumin_l = np.concatenate(lumin_l).ravel()
-
+	
 	return (out_gauss, out_lucy, lumin_in, lumin_g, lumin_l)
 
 
@@ -708,9 +708,9 @@ def LuminDistr(list_in, list_gauss, list_lucy):
 
 
 tstart = time.time()
-out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'gauss', lumin_treshold = 1)
+out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'backgauss', lumin_treshold = 0.01)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)
 Visualise(out_l)
-#LuminDistr(lumin_in, lumin_g, lumin_l)
+LuminDistr(lumin_in, lumin_g, lumin_l)
