@@ -708,7 +708,7 @@ def LuminDistr(list_in, list_gauss, list_lucy):
 
 
 tstart = time.time()
-out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'backgauss', lumin_treshold = 0.01)
+out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'poissgauss', lumin_treshold = 1)
 tend = time.time()
 print((tend-tstart)/60)
 Visualise(out_g)
