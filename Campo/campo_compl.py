@@ -490,7 +490,7 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		i = i + 1
 
 
-def Completeness(niter = 100, board_type = '', lumin_treshold = 0.1):
+def Completeness(niter = 100, board_type = '', lumin_treshold = [0.01, 0.25, 0.5, 1]):
 	path = './' + board_type + '_' + str(N) + '_' + str(sigma) + '_' + str(niter)
 	path_b = path + '/boards'
 	path_g = path + '/gauss'
@@ -542,63 +542,67 @@ def Completeness(niter = 100, board_type = '', lumin_treshold = 0.1):
 			else:
 				print('\n')
 
-	out_gauss = None
-	out_lucy = None
 
-	if (os.path.isfile(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt') == False) or (os.path.isfile(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt') == False):
-		count_trys = np.zeros((grid_len, grid_len))
-		count_occur_g = np.zeros((grid_len, grid_len))
-		count_occur_l = np.zeros((grid_len, grid_len))
+	for j in range(len(lumin_treshold)):
+		if (os.path.isfile(path + '/out_stats_gauss_' + str(int(100*lumin_treshold[j])) + '.txt') == False) or (os.path.isfile(path + '/out_stats_lucy_' + str(int(100*lumin_treshold[j])) + '.txt') == False):
+			count_trys = np.zeros((grid_len, grid_len))
+			count_occur_g = np.zeros((grid_len, grid_len))
+			count_occur_l = np.zeros((grid_len, grid_len))
 
-		print("\nComputing Completeness:")
-		for i in range(0,niter):
-			board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
-			board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
-			board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
+			print("\nComputing Completeness:")
+			for i in range(0,niter):
+				board = np.genfromtxt(path_b + '/board_' + str(i) + '.txt')
+				board_out_g = np.genfromtxt(path_g + '/out_' + str(i) + '.txt')
+				board_out_l = np.genfromtxt(path_l + '/out_' + str(i) + '.txt')
 
-			trysum = np.copy(board)
-			trysum[trysum > 0] = 1
-			count_trys = count_trys + trysum
+				trysum = np.copy(board)
+				trysum[trysum > 0] = 1
+				count_trys = count_trys + trysum
 
-			out_copy_g = np.copy(board_out_g)
-			out_copy_g[out_copy_g > 0] = 1
-			out_copy_g[out_copy_g <= 0] = 0
+				out_copy_g = np.copy(board_out_g)
+				out_copy_g[out_copy_g > 0] = 1
+				out_copy_g[out_copy_g <= 0] = 0
 
-			lumin_temp_g = np.zeros((grid_len, grid_len))
-			lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold)*board) & (board_out_g <= (1 + lumin_treshold)*board))] = 1
+				lumin_temp_g = np.zeros((grid_len, grid_len))
+				lumin_temp_g[np.where((board_out_g >= (1 - lumin_treshold[j])*board) & (board_out_g <= (1 + lumin_treshold[j])*board))] = 1
 
-			temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
+				temp_out_g = np.copy(trysum) + out_copy_g + lumin_temp_g
 
-			occursum_g = np.zeros((grid_len, grid_len))
-			occursum_g[temp_out_g == 3] = 1
-			count_occur_g = count_occur_g + occursum_g
-			
-			out_copy_l = np.copy(board_out_l)
-			out_copy_l[out_copy_l > 0] = 1
-			out_copy_l[out_copy_l <= 0] = 0
+				occursum_g = np.zeros((grid_len, grid_len))
+				occursum_g[temp_out_g == 3] = 1
+				count_occur_g = count_occur_g + occursum_g
+				
+				out_copy_l = np.copy(board_out_l)
+				out_copy_l[out_copy_l > 0] = 1
+				out_copy_l[out_copy_l <= 0] = 0
 
-			lumin_temp_l = np.zeros((grid_len, grid_len))
-			lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold)*board) & (board_out_l <= (1 + lumin_treshold)*board))] = 1
+				lumin_temp_l = np.zeros((grid_len, grid_len))
+				lumin_temp_l[np.where((board_out_l >= (1 - lumin_treshold[j])*board) & (board_out_l <= (1 + lumin_treshold[j])*board))] = 1
 
-			temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
+				temp_out_l = np.copy(trysum) + out_copy_l + lumin_temp_l
 
-			occursum_l = np.zeros((grid_len, grid_len))
-			occursum_l[temp_out_l == 3] = 1
-			count_occur_l = count_occur_l + occursum_l
+				occursum_l = np.zeros((grid_len, grid_len))
+				occursum_l[temp_out_l == 3] = 1
+				count_occur_l = count_occur_l + occursum_l
 
-			if i % 10 == 0:
-				print("\t%i%% "%(100*i/niter), end = "\r")
-			
-		outerr = np.zeros(np.shape(board))
+				if i % 10 == 0:
+					print("\t%i%% "%(100*i/niter), end = "\r")
+				
+			outerr = np.zeros(np.shape(board))
 
-		out_gauss = np.divide(np.copy(count_occur_g), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
-		out_lucy = np.divide(np.copy(count_occur_l), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
-		np.savetxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt', out_gauss)
-		np.savetxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt', out_lucy)
+			out_g = np.divide(np.copy(count_occur_g), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+			out_l = np.divide(np.copy(count_occur_l), np.copy(count_trys), out = np.copy(outerr), where = np.copy(count_trys) != 0)
+			np.savetxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold[j])) + '.txt', out_g)
+			np.savetxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold[j])) + '.txt', out_l)
 
-	else:
-		out_gauss = np.loadtxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold)) + '.txt')
-		out_lucy = np.loadtxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold)) + '.txt')
+	out_gauss = []
+	out_lucy = []
+
+	for i in range(len(lumin_treshold)):
+		gauss = np.loadtxt(path + '/out_stats_gauss_' + str(int(100*lumin_treshold[i])) + '.txt')
+		lucy = np.loadtxt(path + '/out_stats_lucy_' + str(int(100*lumin_treshold[i])) + '.txt')
+		out_gauss.append(gauss)
+		out_lucy.append(lucy)
 
 	lumin_in = []
 	lumin_g = []
@@ -694,23 +698,72 @@ def Visualise(board):
 	return
 
 
-def LuminDistr(list_in, list_gauss, list_lucy):
+def Visualise_Multipl(board_list, lumin_treshold, board_type = '', rec_type = '', save_fig = 'n'):
+	cmap = plt.get_cmap('Spectral')
+	nrows = int(np.ceil(len(board_list)/2))
+
+	fig, axes = plt.subplots(nrows = nrows, ncols = 2, figsize = [11,10])
+	i = 0
+	for ax in axes.flat:
+		if i < len(board_list):
+		    im = ax.pcolormesh(board_list[i], cmap = cmap, norm = 'linear', vmin = 0, vmax = 1)
+		    ax.set_title("Luminosity Precision " + str(int(lumin_treshold[i]*100)) + "%", fontsize = 20)
+		    ax.tick_params(labelsize = 15)
+		    i += 1
+
+	fig.subplots_adjust(left = 0.05, bottom = 0.05, top = 0.95, right = 0.85)
+	cbar_ax = fig.add_axes([0.9, 0.1, 0.05, 0.8])
+	fig.colorbar(im, cax=cbar_ax)
+	cbar_ax.tick_params(labelsize = 15)
+	fig.get_constrained_layout()
+	if save_fig == 'y':
+		fig.savefig(fname = board_type + str(sigma) + '_boards_' + rec_type + '.pdf', format = 'pdf')
+	plt.show()
+
+	fig, axes = plt.subplots(nrows = nrows, ncols = 2, figsize = [10,10], sharex = True, sharey = True)
+	i = 0
+	for ax in axes.flat:
+		if i < len(board_list):
+		    ax.hist(np.sort(board_list[i].flatten()), range = (0,1), bins = 35)
+		    ax.set_title("Luminosity Precision " + str(int(lumin_treshold[i]*100)) + "%", fontsize = 20)
+		    ax.annotate('Mean = ' + str(np.round(np.mean(board_list[i]), 2)), xy=(0.03, 0.93), xycoords = 'axes fraction', fontsize = 15)
+		    ax.xaxis.set_tick_params(labelbottom=True)
+		    ax.yaxis.set_tick_params(labelbottom=True)
+		    ax.tick_params(labelsize = 15)
+		    i += 1
+
+	fig.subplots_adjust(left = 0.07, bottom = 0.07, top = 0.93, right = 0.93)
+	if save_fig == 'y':
+		fig.savefig(fname = board_type + str(sigma) + '_hists_' + rec_type + '.pdf', format = 'pdf')
+	plt.show()
+
+	return
+
+
+def LuminDistr(list_in, list_gauss, list_lucy, board_type = '', save_fig = 'n'):
 	plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 	bins = np.linspace(0, 25000, 2000)
 	plt.hist(list_in, bins = bins, alpha = 0.5, histtype = 'stepfilled', linewidth = 1.5, label = "Starting Distribution")
 	plt.hist(list_gauss, bins = bins, alpha = 0.5, histtype = 'step', linewidth = 1.5, label = "Gaussian Reconstruction")
 	plt.hist(list_lucy, bins = bins, alpha = 0.5, histtype = 'step', linewidth = 1.5, label = "Lucy Reconstruction")
-	plt.title("Cumulative number of pixels per luminosity interval")
+	plt.title("Number of pixels per luminosity interval", fontsize = 20)
 	plt.xscale('log')
 	plt.yscale('log')
-	plt.legend(loc = 'best')
+	plt.legend(loc = 'best', fontsize = 15)
+	plt.tick_params(labelsize = 15)
+	if save_fig == 'y':
+		plt.savefig(fname = board_type + str(sigma) + '_lumin.pdf', format = 'pdf')
+	print(np.sum(list_in), np.sum(list_gauss), np.sum(list_lucy))
 	plt.show()
 
 
 tstart = time.time()
-out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = 'poissgauss', lumin_treshold = 1)
+lum_tresh = [0.1, 0.25, 0.5, 1]
+board_t = 'poissgauss'
+savef = 'y'
+out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = board_t, lumin_treshold = lum_tresh)
 tend = time.time()
 print((tend-tstart)/60)
-Visualise(out_g)
-Visualise(out_l)
-LuminDistr(lumin_in, lumin_g, lumin_l)
+Visualise_Multipl(out_g, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'gauss', save_fig = savef)
+Visualise_Multipl(out_l, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'lucy', save_fig = savef)
+LuminDistr(lumin_in, lumin_g, lumin_l, board_type = board_t, save_fig = savef)
