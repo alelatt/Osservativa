@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy import ndimage
 from scipy.interpolate import CubicSpline, UnivariateSpline
+from scipy.signal import savgol_filter
 import os
 from skimage import io
 from tracefns import *
@@ -27,45 +28,32 @@ L = 10.4079
 height = 4
 
 
-def SpectrumPlot(x, y, xunit = "nm", ylabel = "Intensity", title = ""):
+def SpectrumPlot(x, y, xunit = "", ylabel = "Intensity", title = ""):
 	"""
 	Plots a series of points
 
 	Inputs:
-		fig_num	Number handle of the figure
-		x		Array of x
-		y		Array of y
-		title	Title of the plot
+		x : ndarray
+			Array of x
+		y : ndarray
+			Array of y
+		xunit : str
+			Unit for wavelength
+		ylabel : str
+			Label for y axis
+		title : str
+			Title of the plot
 	"""
 
-	plt.figure(dpi = 150, layout = 'tight')
+	plt.figure(figsize = [10, 7], dpi = 100, layout = 'constrained')
+	plt.title(title, fontsize = 20)
 	plt.plot(x, y, '-k')
-	plt.xlabel("$\lambda$ ["+xunit+"]")
-	plt.ylabel(ylabel)
-	plt.title(title)
+	plt.xlabel("$\lambda$ ["+xunit+"]", fontsize = 15)
+	plt.ylabel(ylabel, fontsize = 15)
+	plt.xticks(fontsize = 15)
+	plt.yticks(fontsize = 15)
 
 	return
-
-
-def MakeMasterFlat(file_names, master_dark):
-	"""
-	Averages given images
-
-	Inputs:
-		file_names	File names of the images to average
-
-	Outputs:
-		data	Averaged image
-	"""
-
-	flat_temp = fits.getdata(file_names[0], ext=0) - master_dark
-	data = (flat_temp/np.mean(flat_temp))/len(file_names)
-
-	for i in range(1, len(file_names)):
-		flat_temp = fits.getdata(file_names[i], ext=0) - master_dark
-		data += (flat_temp/np.mean(flat_temp))/len(file_names)
-
-	return data
 
 
 def LinFit(x, a, b):
@@ -73,9 +61,12 @@ def LinFit(x, a, b):
 	Linear fit function
 
 	Inputs:
-		x	Data
-		a	Offset
-		b	Slope
+		x : ndarray
+			Data
+		a : float
+			Offset
+		b : float
+			Slope
 	"""
 
 	return a + b*x
@@ -86,36 +77,84 @@ def PolyFit(x, a, b, c):
 	Polynomial fit function
 
 	Inputs:
-		x	Data
-		a	Order 0 coefficient
-		b	Order 1 coefficient
-		c	Order 2 coefficient
+		x : ndarray
+			Data
+		a : float
+			Order 0 coefficient
+		b : float
+			Order 1 coefficient
+		c : float
+			Order 2 coefficient
 	"""
 
 	return a + b*x + c*(x**2)
 
 
 def ExpFit(x, a, b, c):
+	"""
+	Exponential fit function
+
+	Inputs:
+		x : ndarray
+			Data
+		a : float
+			Order 0 coefficient
+		b : float
+			Order 1 coefficient
+		c : float
+			Order 2 coefficient
+	"""
+
 	return np.exp(a*(x-b)) + c
 
 
 def AtmosphericTau(x):
 	"""
-	https://www.aanda.org/articles/aa/full_html/2012/07/aa19040-12/aa19040-12.html
+	Optical depth from https://www.aanda.org/articles/aa/full_html/2012/07/aa19040-12/aa19040-12.html
+
+	Inputs:
+	x : ndarray
+		Array of wavelength in nm
 	"""
+
 	return 0.00864*(x**(-(3.916 + (0.074*x) + (0.05/x))))
 
 
-def FitCenter(image, x_min, x_max, debug = False):
+def FitCenter(image, x_min, x_max, y_min, y_max, debug = False):
+	"""
+	Finds rotation angle by fitting a line through brightest pixels in cross-dispersion and rectifying
+
+	Inputs:
+		image : ndarray
+			Science Frame
+		x_min : int
+			Lower bound along x axis
+		x_max : int
+			Upper bound along x axis
+		y_min : int
+			Lower bound along y axis
+		y_max : int
+			Upper bound along y axis
+		debug : bool
+			Debug Option: shows additional info
+
+	Outputs:
+		rot_ang : float
+			Angle to straighten spectrum
+	"""
+
+	img_cut = np.zeros(np.shape(image))
+	img_cut[y_min:y_max + 1, x_min:x_max + 1] = image[y_min:y_max + 1, x_min:x_max + 1]
+
 	x = np.linspace(x_min, x_max, 100, dtype = 'int')
 	y = []
 	yerrs = []
 
 	for i in range(len(x)):
-		y = np.append(y, np.where(image[:, x[i]] == np.max(image[:, x[i]]))[0])
+		y = np.append(y, np.where(img_cut[:, x[i]] == np.max(img_cut[:, x[i]]))[0])
 		max_index = int(y[-1])
-		low_err = abs(max_index - np.where(image[:max_index, x[i]] <= 0.5*np.max(image[:, x[i]]))[0])[-1]
-		high_err = np.where(image[max_index:, x[i]] <= 0.5*np.max(image[:, x[i]]))[0][0]
+		low_err = abs(max_index - np.where(img_cut[:max_index, x[i]] <= 0.5*np.max(img_cut[:, x[i]]))[0])[-1]
+		high_err = np.where(img_cut[max_index:, x[i]] <= 0.5*np.max(img_cut[:, x[i]]))[0][0]
 		yerrs = np.append(yerrs, (low_err + high_err)/2)
 
 	y = np.array(y)
@@ -134,23 +173,33 @@ def FitCenter(image, x_min, x_max, debug = False):
 		rot_ang = np.arccos(np.dot(vec, np.array([1,0])))*180/np.pi
 
 	if debug == True:
-		plt.figure(dpi = 150, layout = 'tight')
+		plt.figure(figsize = [10, 10], dpi = 100, layout = 'constrained')
+		plt.title("100 cross-dispersion profiles from inside the spectrum", fontsize = 20)
 		for i in range(len(x)):
-			plt.plot(image[:,x[i]])
+			plt.plot(img_cut[:,x[i]])
+		plt.xlim(y_min, y_max)
+		plt.xlabel("Cross-Dispersion [px.]", fontsize = 15)
+		plt.ylabel("Intensity [counts]", fontsize = 15)
+		plt.xticks(fontsize = 15)
+		plt.yticks(fontsize = 15)
 
 		print("\n\tFit Results: q = %f pm %f, m = %f pm %f" %(pars[0], errs[0], pars[1], errs[1]))
 		print("\tRotation Angle = %f" %(rot_ang))
 
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.errorbar(x, y, yerrs, marker = '.', color = 'r')
-		plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		lin = np.arange(0, len(image[0,:]), 1)
+		asp_ratio = (y_max-y_min)/(x_max-x_min)
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*asp_ratio + 1.5], dpi = 100, layout = 'constrained')
+		fig.suptitle("Fitted line from spectrum", fontsize = 20)
+		ax.errorbar(x, y, yerrs, marker = '.', linestyle = '', color = 'b', label = "Brightest pixel and FWHM errorbar")
+		ax.imshow(img_cut, cmap = 'gray', origin = 'lower', norm = 'log', aspect = 'equal')
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		lin = np.arange(x_min, x_max + 1, 1)
 		liny = LinFit(lin, *pars)
-		plt.plot(lin, liny, 'r')
-		plt.ylim(0, len(image[:,0]))
-		plt.xlim(0, len(image[0,:]))
+		ax.plot(lin, liny, 'r', label = "Fitted Line")
+		ax.set_ylim(y_min, y_max)
+		ax.set_xlim(x_min, x_max)
+		ax.legend(bbox_to_anchor=(0.5, 1.4), loc='upper center', ncol = 2, fontsize = 15)
+		ax.tick_params(labelsize = 15)
 		plt.show()
 		plt.close('all')
 
@@ -158,17 +207,28 @@ def FitCenter(image, x_min, x_max, debug = False):
 
 
 def FineRotate(image, debug = False):
+	"""
+	Rotates Science Frame so that the spectrum is straight
+
+	Inputs:
+		image : ndarray
+			Science Frame
+		debug : bool
+			Debug Option: shows additional info
+	"""
+
 	y_min = None
 	y_max = None
 	x_min = None
 	x_max = None
 
-	plt.figure(dpi = 150, layout = 'tight')
-	plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-	plt.xlabel("X")
-	plt.ylabel("Y")
-	plt.ylim(0, len(image[:,0]))
-	plt.xlim(0, len(image[0,:]))
+	asp_ratio = len(image[:,0])/len(image[0,:])
+	fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*asp_ratio], dpi = 100, layout = 'constrained')
+	fig.suptitle("Science Frame", fontsize = 20)
+	ax.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log', aspect = 'equal')
+	ax.set_xlabel("X [px.]", fontsize = 15)
+	ax.set_ylabel("Y [px.]", fontsize = 15)
+	ax.tick_params(labelsize = 15)
 	plt.show(block = False)
 
 	rot_ang = None
@@ -198,10 +258,7 @@ def FineRotate(image, debug = False):
 
 		plt.close('all')
 
-		img_cut = np.zeros(np.shape(image))
-		img_cut[x_min:x_max + 1, y_min:y_max + 1] = image[x_min:x_max + 1, y_min:y_max + 1]
-
-		rot_ang = FitCenter(img_cut, y_min, y_max, debug)
+		rot_ang = FitCenter(image, y_min, y_max, x_min, x_max, debug)
 
 		choice = input("\n\tTry fit with different parameters? (y/n) ")
 		if choice == 'n':
@@ -210,23 +267,27 @@ def FineRotate(image, debug = False):
 	return rot_ang
 
 
-def ExtractSpectrum(image):
+def ExtractSpectrum(image, img_min):
 	"""
-	Gets the spectrum from within chosen boundaries averaged along the Y axis
+	Extracts the spectrum from within chosen boundaries (averaged along the Y axis)
 	
 	Inputs:
-		image	Image of the measurement
-		lamp	Image of the lamp
+		image : ndarray
+			Science Frame
+		img_min : float
+			Minimum value of the original image, used in the plots
 
 	Outputs:
-		spectrum_meas	Extracted spectrum
-		spectrum_lamp	Extracted lamp
-		x_min			Lower X bound
-		x_max			Higher X bound
-		y_c				Center line over which the spectra are extracted
+		x_min : int
+			Lower bound along x axis from which the spectra are extracted
+		x_max : int
+			Higher bound along x axis to which the spectra are extracted
+		y_c : int
+			Center line along y axis over which the spectra are extracted
+		width : int
+			Half-width along y axis over which the spectra are averaged
 
-	The user chooses the bounds (x_min, x_max) and the center line (y_c) over which the spectra are extracted.
-		The spectra are taken as centered around y_c and averaged over a range [y_c - width, y_c + width]
+	The spectra will be taken from x_min to x_max, centered around y_c and averaged over a range [y_c - width, y_c + width]
 
 	"""
 
@@ -236,12 +297,12 @@ def ExtractSpectrum(image):
 	width = None
 
 	while True:
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		plt.ylim(0, len(image[:,0]))
-		plt.xlim(0, len(image[0,:]))
+		img_ratio = len(image[:,0])/len(image[0,:])
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*img_ratio], dpi = 100, layout = 'constrained')
+		ax.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log', vmin = img_min)
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		ax.tick_params(labelsize = 15)
 		plt.show(block = False)
 
 		print("\nSelect range over which the spectrum is taken:")
@@ -255,12 +316,13 @@ def ExtractSpectrum(image):
 			print("Values not in bounds")
 			continue
 
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		plt.axvline(x = x_min, linestyle = '--', color = 'r')
-		plt.axvline(x = x_max, linestyle = '--', color = 'r')
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*img_ratio], dpi = 100, layout = 'constrained')
+		ax.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log', vmin = img_min)
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		ax.axvline(x = x_min, linestyle = '--', color = 'r')
+		ax.axvline(x = x_max, linestyle = '--', color = 'r')
+		ax.tick_params(labelsize = 15)
 		plt.show(block = False)
 
 		y_c = int(input("\tSpectrum center at y = "))
@@ -271,15 +333,17 @@ def ExtractSpectrum(image):
 			print("Value not in bounds")
 			continue
 
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		plt.axvline(x = x_min, linestyle = '--', color = 'r')
-		plt.axvline(x = x_max, linestyle = '--', color = 'r')
-		plt.axhline(y = y_c, linestyle = '--', color = 'g')
-		plt.xlim(x_min - 100, x_max + 100)
-		plt.ylim(y_c - 100, y_c + 100)
+		cut_ratio = 200/(x_max - x_min + 200)
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*cut_ratio + 1], dpi = 100, layout = 'constrained')
+		ax.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log', vmin = img_min)
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		ax.axvline(x = x_min, linestyle = '--', color = 'r')
+		ax.axvline(x = x_max, linestyle = '--', color = 'r')
+		ax.axhline(y = y_c, linestyle = '--', color = 'g')
+		ax.set_xlim(x_min - 100, x_max + 100)
+		ax.set_ylim(y_c - 100, y_c + 100)
+		ax.tick_params(labelsize = 15)
 		plt.show(block = False)
 
 		width = int(input("\tAverage over a half width dy = "))
@@ -290,16 +354,17 @@ def ExtractSpectrum(image):
 			print("Too wide")
 			continue
 
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		plt.axvline(x = x_min, linestyle = '--', color = 'r')
-		plt.axvline(x = x_max, linestyle = '--', color = 'r')
-		plt.axhline(y = y_c + width, linestyle = '--', color = 'g')
-		plt.axhline(y = y_c - width, linestyle = '--', color = 'g')
-		plt.xlim(x_min - 100, x_max + 100)
-		plt.ylim(y_c - 100, y_c + 100)
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*cut_ratio + 1], dpi = 100, layout = 'constrained')
+		ax.imshow(image, cmap = 'gray', origin = 'lower', norm = 'log', vmin = img_min)
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		ax.axvline(x = x_min, linestyle = '--', color = 'r')
+		ax.axvline(x = x_max, linestyle = '--', color = 'r')
+		ax.axhline(y = y_c + width, linestyle = '--', color = 'g')
+		ax.axhline(y = y_c - width, linestyle = '--', color = 'g')
+		ax.set_xlim(x_min - 100, x_max + 100)
+		ax.set_ylim(y_c - 100, y_c + 100)
+		ax.tick_params(labelsize = 15)
 		plt.show()
 		plt.close('all')
 
@@ -316,21 +381,35 @@ def CalibrateSpectrum(spectrum_lamp, calibrator_img, pixels_array, FitFn, debug 
 	Converts px to nm using the lamp spectrum
 
 	Inputs:
-		spectrum_lamp	Section of the lamp spectrum corresponding to the extracted spectrum
-		calibrator_img	Lamp calibration image
-		pixels_array	Array of the pixel position of the section of the spectrum
-		FitFn			Fit function for px to wavelength conversion
+		spectrum_lamp : ndarray
+			Section of the lamp spectrum corresponding to the extracted spectrum
+		calibrator_img : image
+			Lamp calibration image
+		pixels_array : ndarray
+			Array of the pixel position of the section of the spectrum
+		FitFn : function
+			Fit function for px to wavelength conversion
+		debug : bool
+			Debug Option: shows additional info
 
 	Outputs:
-		pars	Conversion fit parameters
+		pars : ndarray
+			Conversion fit parameters
+		points : ndarray
+			Calibration points set
 
-	The user is shown the extracted lamp spectrum toghether with the lamp calibration file and is asked to enter the x coord. in px.
-		and the corresponding x coord in angstrom (as specified in cakibration image) together with an error for as many lines as the user wants.
-		A fit is then applied to find the conversion between px and nm
+	The user is shown the extracted lamp spectrum toghether with the lamp calibration image and is asked to enter the x coord. in px.
+		and the corresponding x coord in angstrom (as specified in calibration image) together with an error for as many lines as the user wants.
+		A fit is then applied to find the conversion between px and nm.
 	"""
 
-	SpectrumPlot(pixels_array, spectrum_lamp, xunit = "arb. un.")
-	ImagePlot(calibrator_img)
+	SpectrumPlot(pixels_array, spectrum_lamp, xunit = "px", title = "Lamp Spectrum")
+
+	asp_ratio = len(calibrator_img[:,0])/len(calibrator_img[0,:])
+	plt.figure(figsize = [10, 10*asp_ratio], dpi = 100, layout = 'constrained')
+	plt.imshow(calibrator_img, cmap = 'gray', origin = 'lower')
+	plt.axis('off')
+
 	plt.show(block = False)
 
 	print("\nEnter values of peaks:")
@@ -373,27 +452,36 @@ def CalibrateSpectrum(spectrum_lamp, calibrator_img, pixels_array, FitFn, debug 
 		for i in range(len(pars)):
 			print("\tParameter %i: %f pm %f" %(i+1, pars[i], errs[i]))
 
-		plt.figure(dpi = 150, layout = 'tight')
+		plt.figure(figsize = [10, 7], dpi = 100, layout = 'constrained')
+		plt.title("Conversion px-nm", fontsize = 20)
 		plt.errorbar(x, y/10., yerr = err, marker = '.', linestyle = '', color = 'k')
 		lin = np.linspace(np.min(x), np.max(x), 1000)
 		plt.plot(lin, FitFn(lin, pars[0], pars[1], pars[2]))
-		plt.xlabel("Px.")
-		plt.ylabel("$\lambda$ [nm]")
+		plt.xlabel("Px.", fontsize = 15)
+		plt.ylabel("$\lambda$ [nm]", fontsize = 15)
+		plt.xticks(fontsize = 15)
+		plt.yticks(fontsize = 15)
 		plt.show()
 		plt.close('all')
 
 	return (pars, points)
 
 
-def UseCalibrator(fname, debug = False):
+def UseCalibrator(fname, FitFunc, debug = False):
 	"""
 	Uses calibrator file to convert from px to nm
 
 	Inputs:
-		debug	Debug option
+		fname : str
+			Name of the calibration file
+		FitFunc : function
+			Polynomial function used for px to nm conversion
+		debug : bool
+			Debug Option: shows additional info
 
 	Outputs:
-		pars	Conversion fit parameters
+		pars : ndarray
+			Conversion fit parameters
 	"""
 	x, y, err = np.genfromtxt(fname, unpack = True)
 
@@ -405,12 +493,15 @@ def UseCalibrator(fname, debug = False):
 		for i in range(len(pars)):
 			print("\tParameter %i: %f pm %f" %(i+1, pars[i], errs[i]))
 
-		plt.figure(dpi = 150, layout = 'tight')
+		plt.figure(figsize = [10, 7], dpi = 100, layout = 'constrained')
+		plt.title("Conversion px-nm", fontsize = 20)
 		plt.errorbar(x, y/10., yerr = err, marker = '.', linestyle = '', color = 'k')
 		lin = np.linspace(np.min(x), np.max(x), 1000)
-		plt.plot(lin, PolyFit(lin, pars[0], pars[1], pars[2]))
-		plt.xlabel("Px.")
-		plt.ylabel("$\lambda$ [nm]")
+		plt.plot(lin, FitFunc(lin, pars[0], pars[1], pars[2]))
+		plt.xlabel("Px.", fontsize = 15)
+		plt.ylabel("$\lambda$ [nm]", fontsize = 15)
+		plt.xticks(fontsize = 15)
+		plt.yticks(fontsize = 15)
 		plt.show()
 		plt.close('all')
 
@@ -422,40 +513,59 @@ def GetSpectrum(image, lamp, calibrator_img, FitFn, debug = False):
 	Extracts the calibrated spectrum
 
 	Inputs:
-		image			Image of the measurement
-		lamp			Image of the lamp
-		calibrator_img	Lamp calibration image
-		FitFn			Fit function for px to wavelength conversion
-		debug			Debug option
+		image : ndarray
+			Science Frame
+		lamp : ndarray
+			Lamp Frame
+		calibrator_img : image
+			Calibration image
+		FitFn : function
+			Polynomial function used for px to nm conversion
+		debug : bool
+			Debug Option: shows additional info
 
 	Outputs:
-		lam				Array of converted px to wavelength (nm)
-		spectrum_meas	Measured spectrum (see "ExtractSpectrum()")
-		x_min			Output to be saved in calibration file (see "ExtractSpectrum()")
-		x_max			Output to be saved in calibration file (see "ExtractSpectrum()")
-		y_c				Output to be saved in calibration file (see "ExtractSpectrum()")
-		width			Output to be saved in calibration file (see "ExtractSpectrum()")
-
-	The spectrum and measured lamp are first extracted (see "ExtractSpectrum()")
-	Then the calibration is done to convert from px to nm (see "CalibrateSpectrum" or "UseCalibrator()")
+		lam : ndarray
+			Array of converted px to wavelength (nm)
+		spectrum_meas : ndarray
+			Extracted spectrum
+		rot_ang : float
+			Angle to straighten spectrum (see "FineRotate()")
+		x_min : int
+			Output to be saved in calibration file (see "ExtractSpectrum()")
+		x_max : int
+			Output to be saved in calibration file (see "ExtractSpectrum()")
+		y_c : int
+			Output to be saved in calibration file (see "ExtractSpectrum()")
+		width : int
+			Output to be saved in calibration file (see "ExtractSpectrum()")
+		points : ndarray
+			Calibration points set (see "CalibrateSpectrum()")
+	
+	The angle that straightens the spectrum is first found (see "FineRotate()").
+	Then the spectrum and lamp are rotated.
+	The extraction bounds are found (see "ExtractSpectrum()") and the spectra extracted.
+	The calibration is done to convert from px to nm (see "CalibrateSpectrum()")
 	"""
 
+	img_scale_min = np.min(image)
 	rot_ang = FineRotate(image, debug)
 
 	image_rot = ndimage.rotate(image, rot_ang, reshape = False)
 	lamp_rot = ndimage.rotate(lamp, rot_ang, reshape = False)
 
 	if debug == True:
-		plt.figure(dpi = 150, layout = 'tight')
-		plt.imshow(image_rot, cmap = 'gray', origin = 'lower')
-		plt.xlabel("X")
-		plt.ylabel("Y")
-		plt.ylim(0, len(image[:,0]))
-		plt.xlim(0, len(image[0,:]))
+		asp_ratio = len(image_rot[:,0])/len(image_rot[0,:])
+		fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = [10, 10*asp_ratio], dpi = 100, layout = 'constrained')
+		fig.suptitle("Rotated Image", fontsize = 20)
+		ax.imshow(image_rot, cmap = 'gray', origin = 'lower', norm = 'log', vmin = img_scale_min)
+		ax.set_xlabel("X [px.]", fontsize = 15)
+		ax.set_ylabel("Y [px.]", fontsize = 15)
+		ax.tick_params(labelsize = 15)
 		plt.show()
 		plt.close('all')
 
-	x_min, x_max, y_c, width = ExtractSpectrum(image_rot)
+	x_min, x_max, y_c, width = ExtractSpectrum(image_rot, img_scale_min)
 
 	spectrum_meas = np.mean(image_rot[(y_c - width):(y_c + width + 1), x_min:(x_max + 1)], axis=0)
 	spectrum_lamp = np.mean(lamp_rot[(y_c - width):(y_c + width + 1), x_min:(x_max + 1)], axis=0)
@@ -474,23 +584,31 @@ def Interactivity(flat, dark, FitFn, debug = False):
 	Sets different procedures if a calibrator file is used or not
 
 	Inputs:
-		image_names	Image files' names
-		lamp_names	Lamp file
-		flat_names	Flat file
-		dark_names	Dark file
-		FitFn		Fit function for px to wavelength conversion
-		Debug		Debug option
+		flat : ndarray
+			Master flat frame
+		dark : ndarray
+			Master dark frame
+		FitFn : function
+			Polynomial fit function for px to nm conversion
+		debug : bool
+			If True shows debug options in all code
 
 	Outputs:
-		spectrum_meas1	Measured spectrum intensities for first spectrum (see "ExtractSpectrum()")
-		lam1			Measured spectrum wavelength array for first spectrum (see "GetSpectrum()")
-		spectrum_meas2	Measured spectrum intensities for second spectrum (see "ExtractSpectrum()")
-		lam2			Measured spectrum wavelength array for second spectrum (see "GetSpectrum()")
+		spectrum_meas : ndarray
+			Measured spectrum intensities
+		lam : ndarray
+			Measured spectrum wavelength array
+		air : float
+			Airmass at observation time
+		texp_img : float
+			Exposure time of image
+		ra_ICRS : float
+			Object ra coordinate in degrees in ICRS frame
+		dec_ICRS : float
+			Object dec coordinate in degrees in ICRS frame
 
 	If no calibration file is used one can be created at the end of the process
 	"""
-
-	#gain = np.mean(flat)/flat #, master_flat = flat
 
 	hdul_dark = fits.open(dark_names[0])
 	texp_dark = float(hdul_dark[0].header['EXPOSURE'])
@@ -504,10 +622,10 @@ def Interactivity(flat, dark, FitFn, debug = False):
 	texp_lamp = float(hdulamp[0].header['EXPOSURE'])
 	lamp = np.asarray(ccd_process(CCDData(fits.getdata(fname+"_lamp.fit", ext=0), unit = "adu"), dark_frame = dark, dark_exposure = texp_dark*u.second, data_exposure = texp_lamp*u.second, gain_corrected = False))
 
-	spectrum_meas1 = None
-	lam1 = None
-	spectrum_meas2 = None
-	lam2 = None
+	spectrum_meas = None
+	lam = None
+	ra_ICRS = None
+	dec_ICRS = None
 
 	choice = input("\nUse spectrum extraction file? (y/n) ")
 	if choice == "y":
@@ -519,11 +637,9 @@ def Interactivity(flat, dark, FitFn, debug = False):
 
 		pixels = np.arange(x_min, x_max + 1, 1)
 
-		pars = UseCalibrator(fname+"_calibr.txt", debug)
+		pars = UseCalibrator(fname+"_calibr.txt", FitFn, debug)
 
 		lam = PolyFit(pixels, *pars)
-
-		air = FindAirmass(fname+".fit", ra_ICRS, dec_ICRS)
 		
 	else:
 		lam, spectrum_meas, rot_ang, x_min, x_max, y_c, width, points = GetSpectrum(img_raw, lamp, calibrator, FitFn, debug)
@@ -555,36 +671,70 @@ def Interactivity(flat, dark, FitFn, debug = False):
 			np.savetxt(fname+"_config.txt", [np.array([ra_ICRS, dec_ICRS, rot_ang, x_min, x_max, y_c, width])], delimiter = '\t', fmt = ['%.6f', '%.6f', '%.4f', '%d', '%d', '%d', '%d'])
 			np.savetxt(fname+"_calibr.txt", points.T, delimiter = '\t', fmt = '%.2f')
 
-		air = FindAirmass(fname+".fit", ra_ICRS, dec_ICRS)
+	air = FindAirmass(fname+".fit", ra_ICRS, dec_ICRS)
 
 	return (spectrum_meas, lam, air, texp_img, ra_ICRS, dec_ICRS)
 
 
-def BinSpectrum(spectrum_meas, lam, bin_size):
+def BinSpectrum(wavelength, spectrum, bin_size):
+	"""
+	Bins spectrum
+
+	Inputs:
+		wavelength : ndarray
+			Spectrum wavelength array
+		spectrum : ndarray
+			Spectrum intensity array
+		bin_size : int
+			Bin size for the binning
+
+	Outputs:
+		x : ndarray
+			Binned wavelength array
+		y : ndarray
+			Binned intensity array
+	"""
+
 	start = 0
 	end = 0
 
-	if (lam[0] % bin_size) > bin_size/2:
-		start = ((lam[0] // bin_size) + 1)*bin_size
+	if (wavelength[0] % bin_size) > bin_size/2:
+		start = ((wavelength[0] // bin_size) + 1)*bin_size
 	else:
-		start = (lam[0] // bin_size)*bin_size
+		start = (wavelength[0] // bin_size)*bin_size
 
-	if (lam[-1] % bin_size) > bin_size/2:
-		end = ((lam[-1] // bin_size) + 1)*bin_size
+	if (wavelength[-1] % bin_size) > bin_size/2:
+		end = ((wavelength[-1] // bin_size) + 1)*bin_size
 	else:
-		end = (lam[-1] // bin_size)*bin_size
+		end = (wavelength[-1] // bin_size)*bin_size
 
 	x = np.arange(start, end + bin_size, bin_size)
 	y = []
 
 	for i in range(0,len(x)):
-		y = np.append(y, np.mean(spectrum_meas[np.where((lam >= start + (i - 0.5)*bin_size) & (lam < start + (i + 0.5)*bin_size))]))
+		y = np.append(y, np.mean(spectrum[np.where((wavelength >= start + (i - 0.5)*bin_size) & (wavelength < start + (i + 0.5)*bin_size))]))
 	y = np.array(y)
 
 	return (x, y)
 
 
 def FindAirmass(image_name, ra_ICRS, dec_ICRS):
+	"""
+	Finds airmass for object at observation time
+
+	Inputs:
+		image_name : str
+			Science Frame file name
+		ra_ICRS : float
+			Object ra coordinate in degrees in ICRS frame
+		dec_ICRS : float
+			Object dec coordinate in degrees in ICRS frame
+
+	Outputs:
+		airmass : float
+			Airmass at observation time
+	"""
+
 	hdul = fits.open(image_name)
 	date = hdul[0].header['DATE-OBS']
 
@@ -601,6 +751,28 @@ def FindAirmass(image_name, ra_ICRS, dec_ICRS):
 
 
 def CorrectSpectrum(wavelength, spectrum, airmass, texp, resp_fname):
+	"""
+	Corrects the spectrum using already found response functions
+
+	Inputs:
+		wavelength : ndarray
+			Spectrum wavelength array
+		spectrum : ndarray
+			Spectrum intensity array
+		airmass : float
+			Airmass at observation time
+		texp : float
+			Exposure time
+		resp_fname : str
+			File name of response functions
+
+	Outputs:
+		wavelength[mask_img] : ndarray
+			Wavelength array masked to match intensities array
+		spectrum_corr : ndarray
+			Corrected intensities array
+	"""
+
 	resp_wave, trans_0, instr_0 = np.genfromtxt(response_fname, unpack = True, dtype = (int, float, float))
 
 	low = np.max([np.min(wavelength), np.min(resp_wave)])
@@ -647,7 +819,7 @@ if __name__ == '__main__':
 	
 	bin_size = 5
 
-	wav, spav = BinSpectrum(spectrum, wavelength, bin_size)
+	wav, spav = BinSpectrum(wavelength, spectrum, bin_size)
 	
 	SpectrumPlot(wav, spav, xunit = "nm")
 	plt.show()

@@ -9,21 +9,7 @@ from skimage.restoration import richardson_lucy
 import os
 import time
 
-"""
-Field reconstruction analysis
 
-
-EXECUTION EXAMPLE (">>" indicates user input):
-Radius around bright pixels to which the fit is applied: >>10
-
-Running Reconstruction
-        100%
-
-Cut at % of brightest: >>0.0015
-Fictitious pixels reconstructed: 26 (0.260 %)
-Stars lost in reconstruction: 12 (17.143 %)
-Try other threshold? (y/n): >>n
-"""
 
 #################	GLOBAL CONSTANTS	#################
 #Grid setup constants
@@ -52,7 +38,7 @@ def GenerateSequence():
 		data : ndarray
 			2D matrix such that the first column is the x coord, the second the y coord, the third is the luminosity L in solar luminosities for all stars
 
-	Generated values of mass (M) given in solar masses
+	Generated values of mass (M) given in solar masses and luminosity (L) in solar luminosities
 	"""
 
 	x = uniform(0, grid_len, N)
@@ -105,40 +91,22 @@ def GeneratePixels():
 
 	board_base *= Lmin/(0.4**4)
 
-	#np.savetxt("board.txt", board_base)
-
 	return board_base
 
 
-def BoardIt():
-	"""
-	Checks for the existence of "board.txt". If present imports the board, else generates a new board
-
-	Outputs:
-		board_out	Pixel board: each cell of the 2D board is the luminosity value given as the sum of the luminosities of all the stars within the pixel
-
-	Board generation is done by "GeneratePixel"
-	"""
-
-	board_out = None
-	if os.path.isfile('./board.txt') == False:
-		board_out = GeneratePixels()
-
-	elif os.path.isfile('./board.txt') == True:
-		board_out = np.genfromtxt("board.txt")
-
-	return board_out
-
-
-def PixelPlot(board, title = "", color_scale = 'linear', color_scheme = 'Spectral'):
+def PixelPlot(board, title = '', color_scale = 'linear', color_scheme = 'Spectral'):
 	"""
 	Makes a colormap plot of the given board
 
 	Inputs:
-		plot_num		Identifier number for the plot (must be different for each plot, else it will be overwritten)
-		board			The board to plot
-		color_scale		Scale of the colormap, must be 'linear', 'log' or other specified keywords
-		color_scheme	Color scheme of the colormap
+		board : ndarray
+			The board to plot
+		title : str
+			Plot title
+		color_scale : str
+			Scale of the colormap, must be 'linear', 'log' or other specified keywords
+		color_scheme : str
+			Color scheme of the colormap
 	"""
 
 	f = plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
@@ -156,10 +124,14 @@ def GaussFn(x, sigma, height, offset):
 	Fit funcion for a gaussian with mean = 0 and an offset
 
 	Inputs:
-		x	Data
-		sigma	Sigma of the distribution
-		height	Multiplicative factor
-		offset	Offset
+		x : ndarray
+			Data
+		sigma : float
+			Sigma of the distribution
+		height : float
+			Multiplicative factor
+		offset : float
+			Offset
 	"""
 
 	return ((np.exp(-x**2/(2*(sigma**2)))*height) + offset)
@@ -167,15 +139,21 @@ def GaussFn(x, sigma, height, offset):
 
 def BoardToDistance(board_sect):
 	"""
-	Finds the maximum value in a section of the board and takes the minimum value on the board at each distance from the maximum
+	Finds the maximum value in a section of the board and takes the minimum value at each distance from the maximum
 
 	Inputs:
-		board_sect	Section of board
+		board_sect : ndarray
+			Section of board
 
 	Outputs:
-		dist			Array with every distance from the maximum ordered from shortest distance to furthest
-		vals			Array with the minimum value on the board at each distance from maximum
-		center_coords	Array containing the most luminous point's coordinates on the board
+		dist : ndarray
+			Array with every distance from the maximum ordered from shortest distance to furthest
+		vals : ndarray
+			Array with the minimum value on the board at each distance from maximum
+		weights : ndarray
+			Array with weights for each distance (needed for later fit). The weight corresponds to how many pixels are at the relative distance from the center
+		center_coords : 
+			Array containing the most luminous point's coordinates on the board
 	"""
 
 	x_c, y_c = np.where(board_sect == np.max(board_sect))
@@ -210,14 +188,20 @@ def PSFFit(board_sect, sigma_min, debug = False):
 	Finds sigma for gaussian PSF from a portion of the board around a given luminosity peak
 	
 	Inputs:
-		board_sect	Section of board around a peak
-		sigma_min	Minimum value for sigma, needed for the fit. Also used as first estimate for sigma in the fit
-		debug		Debug option: if True the function will also output a plot of a board the same size of board_sect with the normalized PSF with center in the most luminous point
+		board_sect : ndarray
+			Section of board around a peak
+		sigma_min : float
+			Minimum value for sigma, needed for the fit. Also used as first estimate for sigma in the fit
+		debug : bool
+			Debug option: if True the function will also output a plot of a board the same size of board_sect with the normalized PSF with center in the most luminous point
 
 	Outputs:
-		pars		Best fit estimate of the fit parameters (see "GaussFn")
-		errs		Errors on the best fit estimate of the fit parameters (see "GaussFn")
-		PSF_board	Board with reconstruction of the normalized discrete PSF
+		pars : ndarray
+			Best fit estimate of the fit parameters (see "GaussFn")
+		errs : ndarray
+			Errors on the best fit estimate of the fit parameters (see "GaussFn")
+		PSF_board : ndarray
+			Board with reconstruction of the normalized discrete PSF
 
 	The 2D board is transformed into a 1D array of the minimum values on the board at each distance from the most luminous point (see "BoardToDistance")
 		The fit is done on the set of minimum values using a 1D gaussian (see "GaussFn")
@@ -240,7 +224,7 @@ def PSFFit(board_sect, sigma_min, debug = False):
 		plt.show()
 		plt.close('all')
 
-	return (pars,errs, PSFboard)
+	return (pars, errs, PSFboard)
 
 
 def FindPSF(board_in, nstars = 2 , sigma_min = 1, width = 10, crowded = False, debug = False):
@@ -248,19 +232,28 @@ def FindPSF(board_in, nstars = 2 , sigma_min = 1, width = 10, crowded = False, d
 	Finds PSF from brightest stars
 
 	Inputs:
-		board_in	Input board
-		nstars		Number of stars over which the fit is applied
-		sigma_min	Necessary fit parameter (see "PSFFit")
-		crowded		Background computation mode: If True the background is taken as the weighted average of the offsets in the fits, if False the background is taken as the least luminous pixel
-		debug		Debug option: if True the results and starting conditions (such as the limits of the cut board over which the fit is applied) of each fit and additional info are shown
+		board_in : ndarray
+			Input board
+		nstars : float
+			Number of stars over which the fit is applied
+		sigma_min : float
+			Necessary fit parameter (see "PSFFit")
+		width : int
+			Half-width of the square over which the fit is applied
+		crowded : bool
+			Background computation mode: If True the background is taken as the weighted average of the offsets in the fits, if False the background is taken as the least luminous pixel
+		debug : bool
+			Debug option: if True the results and starting conditions (such as the limits of the cut board over which the fit is applied) of each fit and additional info are shown
 
 	Outputs:
-		PSF_board	Board containing the PSF. The sigma is taken as the weighted average over the fits
-		sig			Value of the averaged sigma
-		background	Constant background value for the image taken as the minimum value found in the board (won't work if the field is too crowded)
+		PSF_board : ndarray
+			Board containing the PSF. The sigma is taken as the weighted average over the fits
+		sig : float
+			Value of the averaged sigma
+		background : float
+			Constant background value for the image taken as the minimum value found in the board (won't work if the field is too crowded)
 
-	The user will be shown the board and will have to choose a distance around the star over which the fit is applied
-		If said distance goes off the board on one or more sides the cut board will stop at the board limits
+	If the square over which the fit is applied goes off the board on one or more sides the board section over which the fit is applied will stop at the board limits
 	"""
 
 	board = np.copy(board_in)
@@ -334,21 +327,15 @@ def FindPSF(board_in, nstars = 2 , sigma_min = 1, width = 10, crowded = False, d
 	return PSF_board, sig, background
 
 
-def Difference(a,b):
+def ChiSq(a, b):
 	"""
-	Computes the "relative difference" between two arrays of the same dimensions
+	Computes chisq
 
 	Inputs:
-		a,b	Arrays (must have same dimensions)
-
-	Outputs:
-		Relative difference computed as the sum over the absolute value of each element of the array (a-b) weighted by the sum of all elements of array a (assumed positive)
+	a,b : ndarray
+		Boards over which the chisq is computed
 	"""
 
-	return np.sum(np.abs(a-b))/np.sum(a)
-
-
-def ChiSq(a, b):
 	return np.sum((a - b)**2)
 
 
@@ -357,23 +344,26 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 	Applies Lucy reconstruction
 
 	Inputs:
-		board		Board to deconvolve
-		PSF_board	Board containing the estimated PSF (see "FindPSF")
-		offset		Constant background found (see "FindPSF")
-		reps		Number of repetitions of the reconstruction (used if use_thresh = False)
-		thresh		Threshold used as stopping condition (used if use_thresh = True)
-		use_thresh	Selects if the reconstruction stops after a set number of repetitions or after a certain threshold is reached
-		use_chisq	Selects if the output image is the one which has the least chi squared (if use_chisq = True) or the last computed one (if use_chisq = False)
-		debug		Debug option: if True will print step number and "relative difference" (see "Difference") at each step
+		board : ndarray
+			Board to deconvolve
+		PSF_board : ndarray
+			Board containing the estimated PSF (see "FindPSF")
+		sigma : float
+			PSF sigma found (see "FindPSF")
+		offset : float
+			Constant background found (see "FindPSF")
+		reps : int
+			Number of repetitions of the reconstruction
+		debug : bool
+			Debug option: if True will print the chisq plot and its minimum value and step at which it was achieved
 
 	Outputs:
-		gnext	(if use_chisq = False) Deconvoluted image from the last iteration
-		saveg	(if use_chisq = True) Deconvoluted image with the least chi squared
+		saveg : ndarray
+			Deconvoluted image with the least chi squared
 
 	This recursive algorithm is assumes that the PSF was estimated correctly and doesn't attempt to recover a more precise form of it
 
-	The reconstruction stops after a set amount of iterations or after a set threshold is reached
-		The threshold is computed as the relative difference between the reconstructed image at the current and previous step (see "Difference")
+	The reconstruction stops after a set amount of iterations or if the last minimum in the chisq was found more than 1/3 of the repetitions ago
 	"""
 
 	print("\nRunning Reconstruction")
@@ -418,7 +408,31 @@ def Lucy(board, PSF_board, sigma, offset, reps = 12000, debug = False):
 		i = i + 1
 
 
-def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
+def Reconstruction(board, sigma, offset, reps = 12000, debug = False):
+	"""
+	Reconstructs image using gaussian fits
+
+	Inputs:
+		board : ndarray
+			Board to deconvolve
+		sigma : float
+			PSF sigma found (see "FindPSF")
+		offset : float
+			Constant background found (see "FindPSF")
+		reps : int
+			Number of repetitions of the reconstruction
+		debug : bool
+			Debug option: if True will print the chisq plot and its minimum value and step at which it was achieved
+
+	Outputs:
+		saveboard : ndarray
+			Deconvoluted image with the least chi squared
+
+	This recursive algorithm is assumes that the PSF was estimated correctly (thus locking in sigma and offset in the gaussian fit)
+
+	The reconstruction stops after a set amount of iterations or if the last minimum in the chisq was found more than 1/3 of the repetitions ago
+	"""
+
 	print("\nRunning Reconstruction")
 
 	image = np.copy(board)
@@ -490,7 +504,37 @@ def Reconstruction(board, sigma, offset, reps = 10000, debug = False):
 		i = i + 1
 
 
-def Completeness(niter = 100, board_type = '', lumin_treshold = [0.01, 0.25, 0.5, 1]):
+def Completeness(niter = 100, board_type = 'gauss', lumin_treshold = [0.01, 0.25, 0.5, 1]):
+	"""
+	Computes completeness and luminosity distribution from large sample of images
+
+	Inputs:
+		niter : int
+			Number of boards to generate and reconstruct
+		board_type : str
+			Type of reconstruction (use 'gauss', 'backgauss', 'poissgauss')
+		lumin_treshold : list
+			List of luminosity precisions to use in computing completeness
+
+	Outputs:
+		out_gauss : list
+			List containing completeness 2D arrays of the reconstructed boards from gaussian fit computed using the various luminosity tresholds
+		out_lucy : list
+			List containing completeness 2D arrays of the reconstructed boards from RL reconstruction computed using the various luminosity tresholds
+		lumin_in : list
+			List of luminosity values of every reconstructed pixel of the generated boards
+		lumin_g : list
+			List of luminosity values of every reconstructed pixel of the reconstructed boards from gaussian fit
+		lumin_l : list
+			List of luminosity values of every reconstructed pixel of the reconstructed boards from RL reconstruction
+	
+	A folder with all the relevant data is created the first time the reconstruction is run
+		Generated and reconstructed boards are saved in appropriately named folders
+		Completeness boards are saved
+
+	If the folder and the generated/reconstructed boards is already present only the completeness (if not already present for the given tresholds) and luminosity statistics are computed
+	"""
+
 	path = './' + board_type + '_' + str(N) + '_' + str(sigma) + '_' + str(niter)
 	path_b = path + '/boards'
 	path_g = path + '/gauss'
@@ -517,14 +561,10 @@ def Completeness(niter = 100, board_type = '', lumin_treshold = [0.01, 0.25, 0.5
 
 			if board_type == 'gauss':
 				img = gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0)
-			elif board_type == 'poisson':
-				img = np.random.poisson(board)
 			elif board_type == 'backgauss':
 				img = gaussian_filter(board + backgr, sigma = sigma, mode = 'constant', cval = backgr)
 			elif board_type == 'poissgauss':
 				img = np.random.poisson(gaussian_filter(board, sigma = sigma, mode = 'constant', cval = 0))
-			else:
-				img = board
 
 			psf, sigma_psf, offset = FindPSF(img, nstars = 5, sigma_min = 1, crowded = True)
 
@@ -629,6 +669,17 @@ def Completeness(niter = 100, board_type = '', lumin_treshold = [0.01, 0.25, 0.5
 
 
 def Visualise(board):
+	"""
+	Visualises one single completeness result board and allows for basic analysis
+
+	Inputs:
+		board : ndarry
+			Completeness statistics
+
+	The user will see the board and its histogram and will be able to choose a cut in completeness to separate two poissible distributions.
+		If a cut is chosen, the board will be shown separated in the two regions
+	"""
+
 	PixelPlot(board)
 	plt.show()
 
@@ -698,7 +749,23 @@ def Visualise(board):
 	return
 
 
-def Visualise_Multipl(board_list, lumin_treshold, board_type = '', rec_type = '', save_fig = 'n'):
+def Visualise_Multipl(board_list, lumin_treshold, board_type = 'gauss', rec_type = '', save_fig = False):
+	"""
+	Shows and saves two figures: one with the completeness boards (with luminosity tresholds given in input) and the other with the relevant histograms
+
+	Inputs:
+		board_list : list
+			List contaioning all completeness boards given as output from "Completeness"
+		lumin_treshold : list
+			List containing all luminosity precisions relative to the boards (used in titling the plots)
+		board_type : str
+			Added effects type ('gauss', 'backgauss', 'poissgauss') used in saving the file
+		rec_type : str
+			Reconstruction type ('gauss', 'lucy') used in saving the file
+		save_fig : bool
+			If True the plots will be saved
+	"""
+
 	cmap = plt.get_cmap('Spectral')
 	nrows = int(np.ceil(len(board_list)/2))
 
@@ -716,7 +783,7 @@ def Visualise_Multipl(board_list, lumin_treshold, board_type = '', rec_type = ''
 	fig.colorbar(im, cax=cbar_ax)
 	cbar_ax.tick_params(labelsize = 15)
 	fig.get_constrained_layout()
-	if save_fig == 'y':
+	if save_fig == True:
 		fig.savefig(fname = board_type + str(sigma) + '_boards_' + rec_type + '.pdf', format = 'pdf')
 	plt.show()
 
@@ -733,14 +800,30 @@ def Visualise_Multipl(board_list, lumin_treshold, board_type = '', rec_type = ''
 		    i += 1
 
 	fig.subplots_adjust(left = 0.07, bottom = 0.07, top = 0.93, right = 0.93)
-	if save_fig == 'y':
+	if save_fig == True:
 		fig.savefig(fname = board_type + str(sigma) + '_hists_' + rec_type + '.pdf', format = 'pdf')
 	plt.show()
 
 	return
 
 
-def LuminDistr(list_in, list_gauss, list_lucy, board_type = '', save_fig = 'n'):
+def LuminDistr(list_in, list_gauss, list_lucy, board_type = 'gauss', save_fig = False):
+	"""
+	Plots luminosity distributions
+
+	Inputs:
+		list_in : list
+			List of luminosity values of every reconstructed pixel of the generated boards
+		list_gauss : list
+			List of luminosity values of every reconstructed pixel of the reconstructed boards from gaussian fit
+		list_lucy : list
+			List of luminosity values of every reconstructed pixel of the reconstructed boards from RL reconstruction
+		board_type : str
+			Added effects type ('gauss', 'backgauss', 'poissgauss') used in saving the file
+		save_fig : bool
+			If True the plots will be saved
+	"""
+
 	plt.figure(figsize = [10,10], dpi = 100, layout = 'tight')
 	bins = np.linspace(0, 25000, 2000)
 	plt.hist(list_in, bins = bins, alpha = 0.5, histtype = 'stepfilled', linewidth = 1.5, label = "Starting Distribution")
@@ -751,19 +834,22 @@ def LuminDistr(list_in, list_gauss, list_lucy, board_type = '', save_fig = 'n'):
 	plt.yscale('log')
 	plt.legend(loc = 'best', fontsize = 15)
 	plt.tick_params(labelsize = 15)
-	if save_fig == 'y':
+	if save_fig == True:
 		plt.savefig(fname = board_type + str(sigma) + '_lumin.pdf', format = 'pdf')
 	print(np.sum(list_in), np.sum(list_gauss), np.sum(list_lucy))
 	plt.show()
 
+	return
 
-tstart = time.time()
-lum_tresh = [0.1, 0.25, 0.5, 1]
-board_t = 'poissgauss'
-savef = 'y'
-out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = board_t, lumin_treshold = lum_tresh)
-tend = time.time()
-print((tend-tstart)/60)
-Visualise_Multipl(out_g, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'gauss', save_fig = savef)
-Visualise_Multipl(out_l, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'lucy', save_fig = savef)
-LuminDistr(lumin_in, lumin_g, lumin_l, board_type = board_t, save_fig = savef)
+
+if __name__ == '__main__':
+	tstart = time.time()
+	lum_tresh = [0.1, 0.25, 0.5, 1]
+	board_t = 'poissgauss'
+	savef = True
+	out_g, out_l, lumin_in, lumin_g, lumin_l = Completeness(niter = 5000, board_type = board_t, lumin_treshold = lum_tresh)
+	tend = time.time()
+	print((tend-tstart)/60)
+	Visualise_Multipl(out_g, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'gauss', save_fig = savef)
+	Visualise_Multipl(out_l, lumin_treshold = lum_tresh, board_type = board_t, rec_type = 'lucy', save_fig = savef)
+	LuminDistr(lumin_in, lumin_g, lumin_l, board_type = board_t, save_fig = savef)
