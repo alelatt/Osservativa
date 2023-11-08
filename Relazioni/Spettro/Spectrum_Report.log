@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.13)  7 NOV 2023 14:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.13)  8 NOV 2023 16:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -209,6 +209,8 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip49
 )
+Package hyperref Info: Option `colorlinks' set `true' on input line 10.
+
 (c:/texlive/2021/texmf-dist/tex/latex/prettyref/prettyref.sty
 Package: prettyref 1998/07/09 v3.0
 )
@@ -513,24 +515,24 @@ Package: listings 2020/03/24 1.8d (Carsten Heinz)
 (./Spectrum_Report.aux)
 \openout1 = `Spectrum_Report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
 
 (c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -554,7 +556,15 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 34.
+(c:/texlive/2021/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2021/10/11 v1.3b Standard LaTeX Color (DPC)
+
+(c:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 149.
+)
+Package hyperref Info: Link coloring ON on input line 37.
 
 (c:/texlive/2021/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
@@ -567,9 +577,9 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count333
 )
-LaTeX Info: Redefining \ref on input line 34.
-LaTeX Info: Redefining \pageref on input line 34.
-LaTeX Info: Redefining \nameref on input line 34.
+LaTeX Info: Redefining \ref on input line 37.
+LaTeX Info: Redefining \pageref on input line 37.
+LaTeX Info: Redefining \nameref on input line 37.
 
 (./Spectrum_Report.out) (./Spectrum_Report.out)
 \@outlinefile=\write3
@@ -581,14 +591,6 @@ Package caption Info: float package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
 
-(c:/texlive/2021/texmf-dist/tex/latex/graphics/color.sty
-Package: color 2021/10/11 v1.3b Standard LaTeX Color (DPC)
-
-(c:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/color.cfg
-File: color.cfg 2016/01/02 v1.6 sample color configuration
-)
-Package color Info: Driver file: pdftex.def on input line 149.
-)
 
 LaTeX hooks Warning: Generic hook
 (hooks)              'file/after/translations-basic-dictionary-english.trsl'
@@ -604,7 +606,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 34.
+or `english'. on input line 37.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -641,91 +643,158 @@ or `english'. on input line 34.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 \c@lstlisting=\count334
-LaTeX Font Info:    Trying to load font information for U+msa on input line 36.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 39.
 
 (c:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 36.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 39.
 
 
 (c:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 4
-2.
+5.
 
 (c:/texlive/2021/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
-Underfull \hbox (badness 10000) in paragraph at lines 38--43
+Underfull \hbox (badness 10000) in paragraph at lines 41--46
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 52--55
+Underfull \hbox (badness 10000) in paragraph at lines 55--58
 
  []
 
+<Rot_ang_profiles.pdf, id=69, 722.7pt x 722.7pt>
+File: Rot_ang_profiles.pdf Graphic file (type pdf)
+<use Rot_ang_profiles.pdf>
+Package pdftex.def Info: Rot_ang_profiles.pdf  used on input line 66.
+(pdftex.def)             Requested size: 232.11043pt x 232.10681pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 57--58
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 67.
+See the caption package documentation for explanation.
 
- []
+<Rot_ang_fit.pdf, id=70, 722.7pt x 211.02841pt>
+File: Rot_ang_fit.pdf Graphic file (type pdf)
+<use Rot_ang_fit.pdf>
+Package pdftex.def Info: Rot_ang_fit.pdf  used on input line 74.
+(pdftex.def)             Requested size: 236.84842pt x 69.1598pt.
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 59--61
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 62--63
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 65--68
-
- []
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 75.
+See the caption package documentation for explanation.
 
 [1
 
-{c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Underfull \hbox (badness 10000) in paragraph at lines 69--70
+{c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./Rot_ang_profi
+les.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 79--80
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 71--72
+Underfull \hbox (badness 10000) in paragraph at lines 82--85
+
+ []
+
+<Extr_step1.pdf, id=122, 722.7pt x 577.43733pt>
+File: Extr_step1.pdf Graphic file (type pdf)
+<use Extr_step1.pdf>
+Package pdftex.def Info: Extr_step1.pdf  used on input line 88.
+(pdftex.def)             Requested size: 236.84842pt x 189.24207pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 89.
+See the caption package documentation for explanation.
+
+<Extr_step2.pdf, id=123, 722.7pt x 162.6075pt>
+File: Extr_step2.pdf Graphic file (type pdf)
+<use Extr_step2.pdf>
+Package pdftex.def Info: Extr_step2.pdf  used on input line 94.
+(pdftex.def)             Requested size: 236.84842pt x 53.29094pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 95.
+See the caption package documentation for explanation.
+
+<Extr_step3.pdf, id=124, 722.7pt x 162.6075pt>
+File: Extr_step3.pdf Graphic file (type pdf)
+<use Extr_step3.pdf>
+Package pdftex.def Info: Extr_step3.pdf  used on input line 100.
+(pdftex.def)             Requested size: 236.84842pt x 53.29094pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 101.
+See the caption package documentation for explanation.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--106
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--77
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 78--79
+Underfull \hbox (badness 10000) in paragraph at lines 110--111
+
+ []
+
+<Lamp_spectr.pdf, id=125, 722.7pt x 505.89pt>
+File: Lamp_spectr.pdf Graphic file (type pdf)
+<use Lamp_spectr.pdf>
+Package pdftex.def Info: Lamp_spectr.pdf  used on input line 113.
+(pdftex.def)             Requested size: 236.84842pt x 165.79404pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 114.
+See the caption package documentation for explanation.
+
+<Lamp_image.pdf, id=126, 722.7pt x 509.50351pt>
+File: Lamp_image.pdf Graphic file (type pdf)
+<use Lamp_image.pdf>
+Package pdftex.def Info: Lamp_image.pdf  used on input line 119.
+(pdftex.def)             Requested size: 236.84842pt x 166.97829pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 120.
+See the caption package documentation for explanation.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--125
+
+ []
+
+[2 <./Rot_ang_fit.pdf> <./Extr_step1.pdf> <./Extr_step2.pdf> <./Extr_step3.pdf>
+ <./Lamp_spectr.pdf> <./Lamp_image.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 126--127
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 81--82
+Underfull \hbox (badness 10000) in paragraph at lines 129--130
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 90--93
+Underfull \hbox (badness 10000) in paragraph at lines 138--141
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 95--96
+Underfull \hbox (badness 10000) in paragraph at lines 143--144
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 97--99
+Underfull \hbox (badness 10000) in paragraph at lines 145--147
 
  []
 
@@ -740,52 +809,152 @@ Package siunitx Warning: Unit macro \angstrom has been deprecated in this
 (siunitx)                \DeclareSIUnit\angstrom{\text {Å}}
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 103--104
+Underfull \hbox (badness 10000) in paragraph at lines 151--152
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 114--116
+Underfull \hbox (badness 10000) in paragraph at lines 162--164
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 117--120
-
- []
-
-[2]
-Underfull \hbox (badness 10000) in paragraph at lines 134--138
+Underfull \hbox (badness 10000) in paragraph at lines 165--168
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 139--141
+Underfull \hbox (badness 10000) in paragraph at lines 182--188
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 150--151
+Underfull \hbox (badness 10000) in paragraph at lines 182--188
+
+ []
+
+[3]
+<Opt_depth.pdf, id=309, 722.7pt x 505.89pt>
+File: Opt_depth.pdf Graphic file (type pdf)
+<use Opt_depth.pdf>
+Package pdftex.def Info: Opt_depth.pdf  used on input line 190.
+(pdftex.def)             Requested size: 236.84842pt x 165.79404pt.
+
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 191.
+See the caption package documentation for explanation.
+
+<Atm_trans.pdf, id=310, 722.7pt x 505.89pt>
+File: Atm_trans.pdf Graphic file (type pdf)
+<use Atm_trans.pdf>
+Package pdftex.def Info: Atm_trans.pdf  used on input line 196.
+(pdftex.def)             Requested size: 236.84842pt x 165.79404pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 197.
+See the caption package documentation for explanation.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 200--201
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 152--153
+Underfull \hbox (badness 10000) in paragraph at lines 202--204
 
  []
 
-[3] (./Spectrum_Report.aux)
+<Instr_resp.pdf, id=311, 722.7pt x 505.89pt>
+File: Instr_resp.pdf Graphic file (type pdf)
+<use Instr_resp.pdf>
+Package pdftex.def Info: Instr_resp.pdf  used on input line 213.
+(pdftex.def)             Requested size: 236.84842pt x 165.79404pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 214.
+See the caption package documentation for explanation.
+
+<Tot_resp.pdf, id=312, 722.7pt x 505.89pt>
+File: Tot_resp.pdf Graphic file (type pdf)
+<use Tot_resp.pdf>
+Package pdftex.def Info: Tot_resp.pdf  used on input line 223.
+(pdftex.def)             Requested size: 236.84842pt x 165.79404pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 224.
+See the caption package documentation for explanation.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 229--230
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 231--232
+
+ []
+
+
+Package multicol Warning: I moved some lines to the next page.
+(multicol)                Footnotes on page 4 might be wrong on input line 235.
+
+
+[4 <./Opt_depth.pdf> <./Atm_trans.pdf> <./Instr_resp.pdf> <./Tot_resp.pdf>]
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 240--243
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 245--247
+
+ []
+
+<Polaris_raw.pdf, id=517, 722.7pt x 505.89pt>
+File: Polaris_raw.pdf Graphic file (type pdf)
+<use Polaris_raw.pdf>
+Package pdftex.def Info: Polaris_raw.pdf  used on input line 250.
+(pdftex.def)             Requested size: 483.69684pt x 338.58945pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 251.
+See the caption package documentation for explanation.
+
+<Polaris_bin.pdf, id=518, 722.7pt x 505.89pt>
+File: Polaris_bin.pdf Graphic file (type pdf)
+<use Polaris_bin.pdf>
+Package pdftex.def Info: Polaris_bin.pdf  used on input line 256.
+(pdftex.def)             Requested size: 459.51051pt x 321.66113pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 257.
+See the caption package documentation for explanation.
+
+[6 <./Polaris_raw.pdf>]
+<Polaris_corr.pdf, id=560, 722.7pt x 505.89pt>
+File: Polaris_corr.pdf Graphic file (type pdf)
+<use Polaris_corr.pdf>
+Package pdftex.def Info: Polaris_corr.pdf  used on input line 262.
+(pdftex.def)             Requested size: 459.51051pt x 321.66113pt.
+
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 263.
+See the caption package documentation for explanation.
+
+[7 <./Polaris_bin.pdf> <./Polaris_corr.pdf>] (./Spectrum_Report.aux)
 Package rerunfilecheck Info: File `Spectrum_Report.out' has not changed.
-(rerunfilecheck)             Checksum: FAFD430851F956522D6C66E9F313F3B7;2193.
+(rerunfilecheck)             Checksum: AE61CB426ABA9ED60AB02025F65E104C;2554.
  ) 
 Here is how much of TeX's memory you used:
- 17955 strings out of 478353
- 334453 string characters out of 5852100
- 625888 words of memory out of 5000000
- 35849 multiletter control sequences out of 15000+600000
- 417236 words of font info for 64 fonts, out of 8000000 for 9000
+ 18104 strings out of 478353
+ 337233 string characters out of 5852100
+ 625567 words of memory out of 5000000
+ 35959 multiletter control sequences out of 15000+600000
+ 419079 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 68i,6n,77p,487b,944s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 68i,8n,77p,466b,954s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}<c:/texl
 ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2021/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2021/texmf-dis
@@ -794,18 +963,23 @@ pe1/public/amsfonts/cm/cmmi7.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public
 /amsfonts/cm/cmr10.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmr5.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb
 ><c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texl
-ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2021/t
-exmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2021/texmf-dist/
-fonts/type1/public/cm-super/sfbx1440.pfb><c:/texlive/2021/texmf-dist/fonts/type
-1/public/cm-super/sfit1000.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/c
-m-super/sfrm1000.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sf
-rm1200.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb
-><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb><c:/texli
-ve/2021/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on Spectrum_Report.pdf (3 pages, 237165 bytes).
+ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><c:/texlive/2021/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2021/texmf-dist/
+fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2021/texmf-dist/fonts/type
+1/public/cm-super/sfbx1440.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/c
+m-super/sfit1000.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sf
+rm0600.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb
+><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb><c:/texli
+ve/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb><c:/texlive/2021/te
+xmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2021/texmf-dist/f
+onts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2021/texmf-dist/fonts/type1
+/public/cm-super/sfti1000.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm
+-super/sftt0800.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sft
+t1000.pfb>
+Output written on Spectrum_Report.pdf (7 pages, 1175942 bytes).
 PDF statistics:
- 173 PDF objects out of 1000 (max. 8388607)
- 132 compressed objects within 2 object streams
- 22 named destinations out of 1000 (max. 500000)
- 105 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 753 PDF objects out of 1000 (max. 8388607)
+ 304 compressed objects within 4 object streams
+ 44 named destinations out of 1000 (max. 500000)
+ 199 words of extra memory for PDF output out of 10000 (max. 10000000)
 

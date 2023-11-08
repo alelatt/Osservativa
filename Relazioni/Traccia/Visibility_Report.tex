@@ -1,8 +1,15 @@
 \documentclass[a4paper]{article}
+\renewcommand{\baselinestretch}{1.1}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks = true,	
+}
+\usepackage{prettyref}
+\newrefformat{fig}{A.\ref{#1}}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{caption}
@@ -13,6 +20,9 @@
 \usepackage{geometry}
 \usepackage{multicol}
 \usepackage{listings}
+\newenvironment{Figure}
+{\par\medskip\noindent\minipage{\linewidth}}
+{\endminipage\par\medskip}
 \geometry{
 	a4paper,
 	total={170mm,257mm},
@@ -29,10 +39,13 @@
 	
 	\section{Introduction}
 		This small computer program was built in order to compute the visibility curve of a sky object on a given day.\\
-		The program outputs the object's rise, culmination and set times, minimum airmass, Alt. and Az. plots, the Sun's rise and set time and the beginning and end time for civil and astronomical twilight.\\
+		The program outputs the object's rise, culmination and set times, minimum airmass, Alt. and Az. plots, the Sun's rise and set times and the beginning and end time for civil and astronomical twilight.\\
+		The resulting curves were confronted with other similar tools available online with good results.\\
+		\newline
+		\textit{The full commented code and source material is available at \url{https://github.com/alelatt/Osservativa}}
 		
-		The resulting curves were confronted with other similar tools available online with good results.
 	\vspace{0.035\textheight}
+	
 	\begin{multicols}{2}
 	\section{Details on the Algorithm}
 		\underline{\textbf{NB:}} All non-time quantities are expressed in degrees\\
@@ -58,7 +71,7 @@
 		is the nutation in longitude in hours,\\ $\Omega = 125.04 - 0.052954 D$ is the longitude of the ascending node of the Moon, $L_S = 280.47 + 0.98565 D$ is the mean longitude of the Sun and \\$\epsilon = 23.4393 - 0.0000004 D$ is the obliquity.\\
 		
 		Then the apparent RA and Dec of the body\footnote{"Apparent" coordinates are "True Equator True Equinox" coordinates} at $0^h$ Dynamical Time\footnote{"Dynamical Time" is used in the book as an abbreviated form of "Barycentric/Terrestrial Dynamical Time", TDT is needed and henceforth abbreviated TT for "Terrestrial Time"} on day D-1, D and D+1 are needed, all expressed in degrees. These sets of coordinates will henceforth be indicated as ($\alpha_i$,$\delta_i$) with $i = 1,2,3$.\\
-		To convert from ICRS coordinates to the needed coordinates the python package Astropy is used.\\
+		To convert from ICRS coordinates to the needed coordinates the python package \textit{astropy} is used.\\
 		
 		A first guess on the rise ($m_1$), culmination ($m_0$) and set ($m_2$) times, expressed as fractions of day, is given by:
 		\begin{align}
@@ -83,7 +96,7 @@
 			\alpha(m) &= \alpha_2 + \frac{n}{2}(a + b + nc)\\
 			\delta(m) &= \delta_2 + \frac{n}{2}(a + b + nc)
 		\end{align}
-		where $n = m + \Delta T/86400$, $a = \alpha_2 - \alpha1$, $b = \alpha_3 - \alpha2$, $c = b - a$ (and similar formulae for $\delta(m)$).\\
+		where $n = m + \Delta T/86400$, $a = \alpha_2 - \alpha_1$, $b = \alpha_3 - \alpha_2$, $c = b - a$ (and similar formulae for $\delta(m)$).\\
 		This estimate is needed to compute the local hour angle of the body $H = \theta_0 + L - \alpha(m)$ from which one derives the body Azimuth and Altitude angles as:
 		\begin{equation}
 			\tan(A(m)) = \frac{\sin(H)}{\cos(H)\sin(\phi)-\tan(\delta(m))\cos(\phi)}
@@ -125,8 +138,8 @@
 			Interactivity (y/n): >>y
 			Date of Observation:
 			        Year: >>2023
-			        Month: >>9
-			        Day: >>19
+			        Month: >>11
+			        Day: >>8
 			Object ICRS Coordinates:
 			        Object RA [deg]: >>101.28715533
 			        Object Dec [deg]: >>-16.71611586
@@ -138,18 +151,18 @@
 			        Observer Height MSL [m]: >>0
 			
 			Sun:
-			        Astro Twilight End:      2023-09-19 03:24:50 [UTC]
-			        Civil Twilight End:      2023-09-19 04:33:55 [UTC]
-			        Rising:                  2023-09-19 05:02:49 [UTC]       Az. from North 86.99 [deg]
-			        Transit:                 2023-09-19 11:13:29 [UTC]       Az. from North 180.00 [deg]
-			        Setting:                 2023-09-19 17:23:23 [UTC]       Az. from North 272.73 [deg]
-			        Civil Twilight Start:    2023-09-19 17:52:12 [UTC]
-			        Astro Twilight Start:    2023-09-19 19:01:01 [UTC]
+			        Astro Twilight End:      2023-11-08 04:24:46 [UTC]
+			        Civil Twilight End:      2023-11-08 05:33:02 [UTC]
+			        Rising:                  2023-11-08 06:03:37 [UTC]       Az. from North 112.39 [deg]
+			        Transit:                 2023-11-08 11:02:09 [UTC]       Az. from North 180.00 [deg]
+			        Setting:                 2023-11-08 16:00:10 [UTC]       Az. from North 247.44 [deg]
+			        Civil Twilight Start:    2023-11-08 16:30:43 [UTC]
+			        Astro Twilight Start:    2023-11-08 17:38:56 [UTC]
 			
 			Object:
-			        Rising:          2023-09-19 01:19:07 [UTC]       Alt. -0.57 [deg]        Az. from North 113.01 [deg]
-			        Transit:         2023-09-19 06:14:12 [UTC]       Alt. 29.26 [deg]        Az. from North 180.00 [deg]     Airmass 2.046
-			        Setting:         2023-09-19 11:09:16 [UTC]       Alt. -0.57 [deg]        Az. from North 246.99 [deg]
+			        Rising:          2023-11-07 22:01:24 [UTC]       Alt. -0.57 [deg]        Az. from North 113.01 [deg]
+			        Transit:         2023-11-08 02:56:28 [UTC]       Alt. 29.25 [deg]        Az. from North 180.00 [deg]     Airmass 2.046
+			        Setting:         2023-11-08 07:51:33 [UTC]       Alt. -0.57 [deg]        Az. from North 246.99 [deg]
 		\end{verbatim}
 		\end{scriptsize}
 		
@@ -164,6 +177,8 @@
 				\includegraphics[width=0.95\textwidth]{Az.pdf}
 			\end{minipage}
 		\end{figure}
+	
+		If the user chooses "Interactivity (y/n): >>n", the standard output is for M31 viewed from Massa (MS) the current day.
 
 		
 \end{document}

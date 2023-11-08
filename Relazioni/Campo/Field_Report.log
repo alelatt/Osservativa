@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.13)  6 NOV 2023 16:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.13)  8 NOV 2023 15:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -209,6 +209,8 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip49
 )
+Package hyperref Info: Option `colorlinks' set `true' on input line 10.
+
 (c:/texlive/2021/texmf-dist/tex/latex/prettyref/prettyref.sty
 Package: prettyref 1998/07/09 v3.0
 )
@@ -513,24 +515,24 @@ Package: listings 2020/03/24 1.8d (Carsten Heinz)
 (./Field_Report.aux)
 \openout1 = `Field_Report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
 
 (c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -554,7 +556,15 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 34.
+(c:/texlive/2021/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2021/10/11 v1.3b Standard LaTeX Color (DPC)
+
+(c:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 149.
+)
+Package hyperref Info: Link coloring ON on input line 37.
 
 (c:/texlive/2021/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
@@ -567,9 +577,9 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count333
 )
-LaTeX Info: Redefining \ref on input line 34.
-LaTeX Info: Redefining \pageref on input line 34.
-LaTeX Info: Redefining \nameref on input line 34.
+LaTeX Info: Redefining \ref on input line 37.
+LaTeX Info: Redefining \pageref on input line 37.
+LaTeX Info: Redefining \nameref on input line 37.
 
 (./Field_Report.out) (./Field_Report.out)
 \@outlinefile=\write3
@@ -581,14 +591,6 @@ Package caption Info: float package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
 
-(c:/texlive/2021/texmf-dist/tex/latex/graphics/color.sty
-Package: color 2021/10/11 v1.3b Standard LaTeX Color (DPC)
-
-(c:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/color.cfg
-File: color.cfg 2016/01/02 v1.6 sample color configuration
-)
-Package color Info: Driver file: pdftex.def on input line 149.
-)
 
 LaTeX hooks Warning: Generic hook
 (hooks)              'file/after/translations-basic-dictionary-english.trsl'
@@ -604,7 +606,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 34.
+or `english'. on input line 37.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -641,44 +643,39 @@ or `english'. on input line 34.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 \c@lstlisting=\count334
-LaTeX Font Info:    Trying to load font information for U+msa on input line 36.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 39.
 
 (c:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 36.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 39.
 
 
 (c:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 4
-1.
+4.
 
 (c:/texlive/2021/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
-Underfull \hbox (badness 10000) in paragraph at lines 38--42
+Underfull \hbox (badness 10000) in paragraph at lines 41--45
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 55--62
+Underfull \hbox (badness 10000) in paragraph at lines 58--65
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 63--64
+Underfull \hbox (badness 10000) in paragraph at lines 66--67
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 65--66
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 67--68
+Underfull \hbox (badness 10000) in paragraph at lines 68--69
 
  []
 
@@ -688,183 +685,183 @@ Underfull \hbox (badness 10000) in paragraph at lines 70--71
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 72--76
+Underfull \hbox (badness 10000) in paragraph at lines 73--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--79
 
  []
 
 
 Package multicol Warning: I moved some lines to the next page.
-(multicol)                Footnotes on page 1 might be wrong on input line 76.
+(multicol)                Footnotes on page 1 might be wrong on input line 79.
 
 [1
 
 {c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Underfull \hbox (badness 10000) in paragraph at lines 77--78
-
- []
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 80--81
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 82--83
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 84--86
+Underfull \hbox (badness 10000) in paragraph at lines 85--86
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 84--86
+Underfull \hbox (badness 10000) in paragraph at lines 87--90
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 90--92
+Underfull \hbox (badness 10000) in paragraph at lines 87--90
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 97--98
+Underfull \hbox (badness 10000) in paragraph at lines 94--96
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 99--103
+Underfull \hbox (badness 10000) in paragraph at lines 101--102
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 104--105
+Underfull \hbox (badness 10000) in paragraph at lines 103--107
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 116--117
+Underfull \hbox (badness 10000) in paragraph at lines 108--109
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 118--119
+Underfull \hbox (badness 10000) in paragraph at lines 120--121
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--123
 
  []
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 120--121
+Underfull \hbox (badness 10000) in paragraph at lines 124--125
 
  []
 
 <gauss2_boards_gauss.pdf, id=84, 794.97pt x 722.7pt>
 File: gauss2_boards_gauss.pdf Graphic file (type pdf)
 <use gauss2_boards_gauss.pdf>
-Package pdftex.def Info: gauss2_boards_gauss.pdf  used on input line 127.
+Package pdftex.def Info: gauss2_boards_gauss.pdf  used on input line 131.
 (pdftex.def)             Requested size: 290.22105pt x 263.84395pt.
 <gauss2_boards_lucy.pdf, id=85, 794.97pt x 722.7pt>
 File: gauss2_boards_lucy.pdf Graphic file (type pdf)
 <use gauss2_boards_lucy.pdf>
-Package pdftex.def Info: gauss2_boards_lucy.pdf  used on input line 133.
+Package pdftex.def Info: gauss2_boards_lucy.pdf  used on input line 137.
 (pdftex.def)             Requested size: 290.22105pt x 263.84395pt.
 [3 <./gauss2_boards_gauss.pdf> <./gauss2_boards_lucy.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 139--140
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 141--142
-
- []
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 143--144
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 145--147
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 148--150
+Underfull \hbox (badness 10000) in paragraph at lines 147--148
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--159
+Underfull \hbox (badness 10000) in paragraph at lines 149--151
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--159
+Underfull \hbox (badness 10000) in paragraph at lines 152--154
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--159
+Underfull \hbox (badness 10000) in paragraph at lines 155--162
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--159
+Underfull \hbox (badness 10000) in paragraph at lines 155--162
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--162
 
  []
 
 <gauss2_lumin.pdf, id=160, 722.7pt x 722.7pt>
 File: gauss2_lumin.pdf Graphic file (type pdf)
 <use gauss2_lumin.pdf>
-Package pdftex.def Info: gauss2_lumin.pdf  used on input line 162.
+Package pdftex.def Info: gauss2_lumin.pdf  used on input line 165.
 (pdftex.def)             Requested size: 236.84842pt x 236.84863pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 163.
+(caption)                particular \caption on input line 166.
 See the caption package documentation for explanation.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 167--168
+Underfull \hbox (badness 10000) in paragraph at lines 170--171
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 169--170
+Underfull \hbox (badness 10000) in paragraph at lines 172--173
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 171--172
+Underfull \hbox (badness 10000) in paragraph at lines 174--175
 
  []
 
 [4 <./gauss2_lumin.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 177--178
+Underfull \hbox (badness 10000) in paragraph at lines 180--181
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 179--181
+Underfull \hbox (badness 10000) in paragraph at lines 182--184
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 182--183
+Underfull \hbox (badness 10000) in paragraph at lines 185--186
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 184--185
+Underfull \hbox (badness 10000) in paragraph at lines 187--188
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 192--193
+Underfull \hbox (badness 10000) in paragraph at lines 195--196
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 194--195
+Underfull \hbox (badness 10000) in paragraph at lines 197--198
 
  []
 
@@ -872,68 +869,68 @@ Underfull \hbox (badness 10000) in paragraph at lines 194--195
 <gauss2_hists_gauss.pdf, id=221, 722.7pt x 722.7pt>
 File: gauss2_hists_gauss.pdf Graphic file (type pdf)
 <use gauss2_hists_gauss.pdf>
-Package pdftex.def Info: gauss2_hists_gauss.pdf  used on input line 200.
+Package pdftex.def Info: gauss2_hists_gauss.pdf  used on input line 203.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
 <gauss2_hists_lucy.pdf, id=222, 722.7pt x 722.7pt>
 File: gauss2_hists_lucy.pdf Graphic file (type pdf)
 <use gauss2_hists_lucy.pdf>
-Package pdftex.def Info: gauss2_hists_lucy.pdf  used on input line 206.
+Package pdftex.def Info: gauss2_hists_lucy.pdf  used on input line 209.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [6 <./gauss2_hists_gauss.pdf> <./gauss2_hists_lucy.pdf>]
 <backgauss2_boards_gauss.pdf, id=294, 794.97pt x 722.7pt>
 File: backgauss2_boards_gauss.pdf Graphic file (type pdf)
 <use backgauss2_boards_gauss.pdf>
-Package pdftex.def Info: backgauss2_boards_gauss.pdf  used on input line 213.
+Package pdftex.def Info: backgauss2_boards_gauss.pdf  used on input line 216.
 (pdftex.def)             Requested size: 321.74274pt x 292.48985pt.
 <backgauss2_hists_gauss.pdf, id=295, 722.7pt x 722.7pt>
 File: backgauss2_hists_gauss.pdf Graphic file (type pdf)
 <use backgauss2_hists_gauss.pdf>
-Package pdftex.def Info: backgauss2_hists_gauss.pdf  used on input line 219.
+Package pdftex.def Info: backgauss2_hists_gauss.pdf  used on input line 222.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [7 <./backgauss2_boards_gauss.pdf> <./backgauss2_hists_gauss.pdf>]
 <backgauss2_boards_lucy.pdf, id=364, 794.97pt x 722.7pt>
 File: backgauss2_boards_lucy.pdf Graphic file (type pdf)
 <use backgauss2_boards_lucy.pdf>
-Package pdftex.def Info: backgauss2_boards_lucy.pdf  used on input line 226.
+Package pdftex.def Info: backgauss2_boards_lucy.pdf  used on input line 229.
 (pdftex.def)             Requested size: 321.74274pt x 292.48985pt.
 <backgauss2_hists_lucy.pdf, id=365, 722.7pt x 722.7pt>
 File: backgauss2_hists_lucy.pdf Graphic file (type pdf)
 <use backgauss2_hists_lucy.pdf>
-Package pdftex.def Info: backgauss2_hists_lucy.pdf  used on input line 232.
+Package pdftex.def Info: backgauss2_hists_lucy.pdf  used on input line 235.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [8 <./backgauss2_boards_lucy.pdf> <./backgauss2_hists_lucy.pdf>]
 <backgauss2_lumin.pdf, id=435, 722.7pt x 722.7pt>
 File: backgauss2_lumin.pdf Graphic file (type pdf)
 <use backgauss2_lumin.pdf>
-Package pdftex.def Info: backgauss2_lumin.pdf  used on input line 241.
+Package pdftex.def Info: backgauss2_lumin.pdf  used on input line 244.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [9 <./backgauss2_lumin.pdf>]
 <poissgauss2_boards_gauss.pdf, id=478, 794.97pt x 722.7pt>
 File: poissgauss2_boards_gauss.pdf Graphic file (type pdf)
 <use poissgauss2_boards_gauss.pdf>
-Package pdftex.def Info: poissgauss2_boards_gauss.pdf  used on input line 249.
+Package pdftex.def Info: poissgauss2_boards_gauss.pdf  used on input line 252.
 (pdftex.def)             Requested size: 321.74274pt x 292.48985pt.
 <poissgauss2_hists_gauss.pdf, id=479, 722.7pt x 722.7pt>
 File: poissgauss2_hists_gauss.pdf Graphic file (type pdf)
 <use poissgauss2_hists_gauss.pdf>
-Package pdftex.def Info: poissgauss2_hists_gauss.pdf  used on input line 255.
+Package pdftex.def Info: poissgauss2_hists_gauss.pdf  used on input line 258.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [10 <./poissgauss2_boards_gauss.pdf> <./poissgauss2_hists_gauss.pdf>]
 <poissgauss2_boards_lucy.pdf, id=548, 794.97pt x 722.7pt>
 File: poissgauss2_boards_lucy.pdf Graphic file (type pdf)
 <use poissgauss2_boards_lucy.pdf>
-Package pdftex.def Info: poissgauss2_boards_lucy.pdf  used on input line 262.
+Package pdftex.def Info: poissgauss2_boards_lucy.pdf  used on input line 265.
 (pdftex.def)             Requested size: 321.74274pt x 292.48985pt.
 <poissgauss2_hists_lucy.pdf, id=549, 722.7pt x 722.7pt>
 File: poissgauss2_hists_lucy.pdf Graphic file (type pdf)
 <use poissgauss2_hists_lucy.pdf>
-Package pdftex.def Info: poissgauss2_hists_lucy.pdf  used on input line 268.
+Package pdftex.def Info: poissgauss2_hists_lucy.pdf  used on input line 271.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [11 <./poissgauss2_boards_lucy.pdf> <./poissgauss2_hists_lucy.pdf>]
 <poissgauss2_lumin.pdf, id=618, 722.7pt x 722.7pt>
 File: poissgauss2_lumin.pdf Graphic file (type pdf)
 <use poissgauss2_lumin.pdf>
-Package pdftex.def Info: poissgauss2_lumin.pdf  used on input line 277.
+Package pdftex.def Info: poissgauss2_lumin.pdf  used on input line 280.
 (pdftex.def)             Requested size: 292.4934pt x 292.48985pt.
  [12 <./poissgauss2_lumin.pdf>]
 (./Field_Report.aux)
@@ -943,11 +940,11 @@ Package rerunfilecheck Info: File `Field_Report.out' has not changed.
 Here is how much of TeX's memory you used:
  18102 strings out of 478353
  338194 string characters out of 5852100
- 629227 words of memory out of 5000000
+ 629233 words of memory out of 5000000
  35960 multiletter control sequences out of 15000+600000
  419229 words of font info for 66 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 68i,8n,77p,743b,909s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 68i,8n,77p,683b,909s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}<c:/texl
 ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2021/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2021/texmf-dis
@@ -967,7 +964,7 @@ ve/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb><c:/texlive/2021/te
 xmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2021/texmf-dist/f
 onts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2021/texmf-dist/fonts/type1
 /public/cm-super/sfti1000.pfb>
-Output written on Field_Report.pdf (12 pages, 4193335 bytes).
+Output written on Field_Report.pdf (12 pages, 4193582 bytes).
 PDF statistics:
  758 PDF objects out of 1000 (max. 8388607)
  275 compressed objects within 3 object streams

@@ -5,6 +5,9 @@
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\hypersetup{
+	colorlinks = true,	
+}
 \usepackage{prettyref}
 \newrefformat{fig}{A.\ref{#1}}
 \usepackage{amsmath}
@@ -72,7 +75,7 @@
 			The parameters needed for the reconstruction are the Gaussian PSF's sigma and the background intensity (offset). These parameters are found by fitting some of the brightest stars in the image.\\
 			A 1D Gaussian is fitted onto the minimum profile around the brightest pixel. This "minimum profile" is the profile obtained by taking the faintest pixel at each distance around the peak. This is done in order to minimize the effects that an overlap with other stars may have.\\
 			The obtained parameters (which include the brightness of the underlying star) are used to compute a 2D board that reproduces the fitted star and extends up to $4\sigma$ in all directions and is used to "remove" the brightest star from the image.\\
-			This process is repeated as many times as wanted and the final PSF parameters are given as the weighted averages of the fit parameters over all the fitted stars.\\
+			This process is repeated as many times as wanted and the final sigma and PSF width are given as the weighted averages over all the fitted stars.\\
 			
 			Since the assumption is that only a Gaussian PSF and some background luminosity are added, this fitting method becomes less precise as soon as any form of noise is added.\\
 			
@@ -81,7 +84,8 @@
 			
 			The width of the PSF found in the first step is used to compute a board which contains the PSF up to $4\sigma$ in all directions, needed in the reconstruction.\\
 			
-			First it's worth noting that the background can in principle be removed before starting the reconstruction. Letting $o$(x,y) be the observed image, $i$(x,y) the image before convolving with the PSF and $g$(x,y) the PSF and assuming that the background is constant, we can write $o(x,y) = c(x,y) + b$ where $c$(x,y) is the background-subtracted image and $b$ is the background and is a matrix of constant value. Omitting the coordinates we can write $o = i \otimes g = (c \otimes g) + (b \otimes g)$, but, since g is normalized and b is constant, this reduces to $o = (c \otimes g) + b$. We thus run the reconstruction on $c$(x,y) by subtracting the background before any other operation on the image.\\
+			First it's worth noting that a constant background can in principle be removed before starting the reconstruction. If the image before convolving with the PSF is $i$(x,y), we can write $i(x,y) = c(x,y) + b$ where $c$(x,y) is the background-subtracted image and $b$, a matrix of constant value, is the background.
+			Letting $o$(x,y) be the observed image and $g$(x,y) the PSF, and assuming that the background is constant, we can write, omitting the coordinates, $o = i \otimes g = (c \otimes g) + (b \otimes g)$, but, since g is normalized and b is constant, this reduces to $o = (c \otimes g) + b$. We thus run the reconstruction on $c$(x,y) by subtracting the background before any other operation on the image.\\
 			\newline
 			
 			Letting $f_i$(x,y) be the reconstructed image at the i-th iteration, then:
@@ -96,9 +100,9 @@
 		\subsection{Reconstruction using Gaussian fit}
 			As a benchmark for the RL reconstruction this method takes advantage of a similar technique as the one used to find the PSF and offset.\\
 			
-			The reconstruction starts from the brightest peak and fits the minimum profile, keeping width and offset constrained so as to fit only the amplitude of the Gaussian.\\
-			The fitted amplitude is used as the intensity of the star, taken as a delta centered in the peak. The star is then saved in an output image.\\
-			A board is then constructed by convolving a Gaussian of the correct sigma to the reconstructed star as to get back the contribution to the observed image of the star. This board is then subtracted from the image in order to remove the signature of the star.\\
+			The reconstruction starts from the brightest peak and fits the minimum profile, keeping sigma and offset constrained so as to fit only the amplitude of the Gaussian.\\
+			The fitted amplitude is used to get the intensity of the star, taken as a delta centered in the peak. The star is then saved in an output image.\\
+			A board is then constructed by convolving a Gaussian of the correct sigma to the reconstructed star as to get back the contribution of the star to the observed image. This board is then subtracted from the image in order to remove the signature of the star.\\
 			The procedure then starts back by taking the new brightest peak.\\
 			
 			The end conditions are the same as for the RL reconstruction.\\
@@ -143,13 +147,12 @@
 			By convolving with the PSF, the luminosity of stars near the border of the image is spread in part out of the image and is thus lost. Having removed the offset the only assumption that can be made is that outside the image's borders there's nothing.\\
 			
 			Since RL conserves flux, the intensity that can be reconstructed is limited by that inside the image, thus a lower luminosity for the reconstructed stars is to be expected and with it a lower completeness when choosing a higher precision in luminosity.\\
-			This can also cause a shift of the stars near the border to the inside, since, looking at a star after the convolution with a PSF, a bigger part of the total luminosity is now towards the center with respect to the brightest point. This can be reconstructed as a star shifted to the inside.\\
+			This can also cause a shift of the stars near the border to the inside. Looking at a star after the convolution with a PSF, a bigger part of the total luminosity is now towards the center of the image with respect to the brightest point, since towards the border part of it fell outside and was lost. This can be reconstructed as a star shifted to the inside.\\
 			
 			The Gaussian fit reconstruction is more uniform in its performance since in principle there only needs to be one point at each distance from the peak in order to fit, so the border only has a minimal effect. On the other hand many factors can influence the goodness of the fit, so this method is on average worse than RL.\\
 			The better performance at higher luminosity precision (Figures \ref{fig:ghg} and \ref{fig:ghl}) is probably due to the fact that by fitting a star is identified in one step and, even if the fit isn't perfect, what's left is little relevant for subsequent fits. This characteristic is highlighted by the fact that the Gaussian reconstruction often finishes before the maximum amount of steps is reached, since in few steps (comparable to the number of stars present) the $\chi^2$ reaches a minimum (having fitted all the stars) and starts going back up, thus stopping the algorithm.\\
 			
 			Since the background is removed before the RL reconstruction and is a fixed parameter in the Gaussian reconstruction, little to no difference can be seen between having background or not (Figures \ref{fig:gbg} - \ref{fig:ghl} and figures \ref{fig:bbg} - \ref{fig:bhl}), and what little can be seen is probably due to slight differences in the efficiency of the initial determination of sigma and offset.\\
-			\newline
 			\newline
 			\newline
 			\underline{\textbf{NB:}} Due to the mistake in the luminosity\\
@@ -166,9 +169,9 @@
 			
 			The luminosity distribution of the Gaussian reconstruction more closely matches the original one, with notable exceptions at high luminosities.\\
 			
-			The luminosity distribution of the RL reconstruction is closer to the original at high luminosity, it reconstructs less very bright and very faint pixels and, most notably, reconstructs more mid-to-low luminosity pixels. These mistakes in the reconstruction are due to the initial fit, that gives a good, but not perfect, estimate of sigma and offset. These ever so slightly wrong parameters cause a "smearing" of the luminosity, thus explaining both the relative lack of very faint and very bright pixels and an abbundance of low-to-mid luminosity pixels.\\
+			The luminosity distribution of the RL reconstruction is closer to the original at high luminosity, it reconstructs less very bright and very faint pixels and, most notably, reconstructs more mid-to-low luminosity pixels. These mistakes in the reconstruction are due to the initial fit, that gives a good, but not perfect, estimate of sigma and offset. These ever so slightly wrong parameters cause a "smearing" of the luminosity in the reconstructed image, thus explaining both the relative lack of very faint and very bright pixels and an abbundance of low-to-mid luminosity pixels.\\
 			
-			As expected there is little difference in the luminosity distributions between background (Figure \ref{fig:bl}) and without background (Figure \ref{fig:gl}).\\
+			As expected there is little difference in the luminosity distributions between background (Figure \ref{fig:bl}) and no background (Figure \ref{fig:gl}).\\
 			
 			In general it's also worth noting that the total luminosity contained in the images reconstructed with RL is, on average, $\sim 3.5\%$ less than the original. Since the RL algorithm conserves flux, this can give an estimate of how much light is lost outside the image when applying the PSF.
 		
