@@ -6,5 +6,5 @@ One last folder contains the reports and their material.
 The folders are structured so that each of them can operate independently.
 
 Beware the folder "Campo". It's very heavy due to the presence of 45000 txt files needed for three different symulations
-and by itself contributes the vast majority of the approx 16Gb of data of this repository.
+and by itself contributes the vast majority of the approx 8Gb of data of this repository.
 Currently there's no plan to change the structure of this folder for it to be less heavy.
